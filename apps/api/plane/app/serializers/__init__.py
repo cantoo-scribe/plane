@@ -112,6 +112,11 @@ from .estimate import (
     WorkspaceEstimateSerializer,
 )
 
+from .time_entry import (
+    TimeEntrySerializer,
+    TimeEntryLiteSerializer,
+)
+
 from .intake import (
     IntakeSerializer,
     IntakeIssueSerializer,

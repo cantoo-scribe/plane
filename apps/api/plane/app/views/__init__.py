@@ -190,6 +190,15 @@ from .estimate.base import (
     EstimatePointEndpoint,
 )
 
+from .time_entry.base import (
+    IssueTimeEntryEndpoint,
+    TimeEntryDetailEndpoint,
+    TimeEntryStopEndpoint,
+    RunningTimeEntryEndpoint,
+    WorkspaceTimeEntryReportEndpoint,
+    IssueTimeEntrySummaryEndpoint,
+)
+
 from .intake.base import (
     IntakeViewSet,
     IntakeIssueViewSet,
