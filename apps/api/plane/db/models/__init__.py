@@ -16,6 +16,7 @@ from .draft import (
     DraftIssueCycle,
 )
 from .estimate import Estimate, EstimatePoint
+from .time_entry import TimeEntry
 from .exporter import ExporterHistory
 from .importer import Importer
 from .intake import Intake, IntakeIssue

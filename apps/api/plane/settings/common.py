@@ -135,11 +135,21 @@ MIDDLEWARE = [
 ]
 
 # Rest Framework settings
+# Throttles protect API/DB — not static assets (served by web Caddy without rate_limit).
+# - anon: unauthenticated API calls
+# - user: authenticated session traffic (SPA); override via USER_RATE_LIMIT
+# Auth endpoints also use AuthenticationThrottle (AUTHENTICATION_RATE_LIMIT).
+# API-token views use ApiKeyRateThrottle (API_KEY_RATE_LIMIT).
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
-    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.AnonRateThrottle",),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "30/minute",
+        "anon": os.environ.get("ANON_RATE_LIMIT", "30/minute"),
+        # SPA login fans out many API calls; 600/min is a safe ceiling for normal use.
+        "user": os.environ.get("USER_RATE_LIMIT", "600/minute"),
         "asset_id": "5/minute",
     },
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),

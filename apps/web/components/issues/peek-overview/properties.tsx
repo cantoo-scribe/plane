@@ -38,6 +38,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserProfile } from "@/hooks/store/user";
 // plane web components
 import { IssueParentSelectRoot } from "@/components/issues/parent-select-root";
+import { IssueTimeTracking } from "@/components/time-tracking/issue-time-tracking";
 import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
@@ -188,6 +189,13 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             />
           </SidebarPropertyListItem>
         )}
+
+        <IssueTimeTracking
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issueId}
+          isEditable={!disabled}
+        />
 
         {projectDetails?.module_view && (
           <SidebarPropertyListItem icon={ModuleOutline} label={t("common.modules")}>

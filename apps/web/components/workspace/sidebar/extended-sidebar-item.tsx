@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { attachInstruction, extractInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
@@ -142,12 +143,16 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
       : `/${workspaceSlug.toString()}${item.href}`;
   const isActive = itemHref === pathname;
 
-  const pinNavigationItem = (key: string) => {
-    toggleWorkspaceItem(key, true);
+  const pinNavigationItem = (key: string, e?: ReactMouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    void toggleWorkspaceItem(key, true);
   };
 
-  const unPinNavigationItem = (key: string) => {
-    toggleWorkspaceItem(key, false);
+  const unPinNavigationItem = (key: string, e?: ReactMouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    void toggleWorkspaceItem(key, false);
   };
 
   const icon = getSidebarNavigationItemIcon(item.key);
@@ -205,14 +210,14 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
               <Tooltip label="Unpin">
                 <UnpinOutline
                   className="size-3.5 flex-shrink-0 text-placeholder outline-none hover:text-tertiary"
-                  onClick={() => unPinNavigationItem(item.key)}
+                  onClick={(e) => unPinNavigationItem(item.key, e)}
                 />
               </Tooltip>
             ) : (
               <Tooltip label="Pin">
                 <PinOutline
                   className="size-3.5 flex-shrink-0 text-placeholder outline-none hover:text-tertiary"
-                  onClick={() => pinNavigationItem(item.key)}
+                  onClick={(e) => pinNavigationItem(item.key, e)}
                 />
               </Tooltip>
             )}

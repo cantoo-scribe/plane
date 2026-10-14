@@ -43,6 +43,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local components
+import { IssueListTimerButton } from "@/components/time-tracking/issue-list-timer-button";
 import { IssuePropertyLabels } from "./labels";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
 
@@ -78,7 +79,8 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
 
   // router
   const router = useAppRouter();
-  const { workspaceSlug, projectId } = useParams();
+  const { workspaceSlug: routeWorkspaceSlug, projectId } = useParams();
+  const workspaceSlug = (routeWorkspaceSlug || "").toString();
 
   // derived values
   const stateDetails = getStateById(issue.state_id);
@@ -472,6 +474,16 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           maxRender={3}
         />
       </WithDisplayPropertiesHOC>
+
+      {/* time tracking timer — always shown when project feature is on */}
+      {!isEpic && issue.project_id && issue.id && workspaceSlug ? (
+        <IssueListTimerButton
+          workspaceSlug={workspaceSlug}
+          projectId={issue.project_id}
+          issueId={issue.id}
+          disabled={isReadOnly}
+        />
+      ) : null}
     </div>
   );
 });

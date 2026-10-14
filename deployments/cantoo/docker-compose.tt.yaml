@@ -1,0 +1,16 @@
+# Time-tracking custom images (Cantoo). Named volumes / plane.env untouched.
+# Applied alongside docker-compose.yaml via restart-tt.sh / release.sh.
+services:
+  web:
+    image: cantoo/plane-frontend:tt
+    # Override baked Caddyfile until next frontend image rebuild embeds the fix
+    volumes:
+      - ./Caddyfile.web:/etc/caddy/Caddyfile:ro
+  api:
+    image: cantoo/plane-backend:tt
+  worker:
+    image: cantoo/plane-backend:tt
+  beat-worker:
+    image: cantoo/plane-backend:tt
+  migrator:
+    image: cantoo/plane-backend:tt

@@ -50,6 +50,7 @@ class WorkspaceUserPreferenceViewSet(BaseAPIView):
                                     WorkspaceUserPreference.UserPreferenceKeys.DRAFTS,
                                     WorkspaceUserPreference.UserPreferenceKeys.YOUR_WORK,
                                     WorkspaceUserPreference.UserPreferenceKeys.STICKIES,
+                                    WorkspaceUserPreference.UserPreferenceKeys.TIME_TRACKING,
                                 ]
                                 else False
                             ),
@@ -80,24 +81,37 @@ class WorkspaceUserPreferenceViewSet(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
     def patch(self, request, slug):
+        workspace = Workspace.objects.get(slug=slug)
         for data in request.data:
-            key = data.pop("key", None)
+            key = data.get("key")
             if not key:
                 continue
 
             preference = WorkspaceUserPreference.objects.filter(
-                key=key, workspace__slug=slug, user=request.user
+                key=key, workspace_id=workspace.id, user=request.user
             ).first()
 
             if not preference:
+                # Upsert: accept keys added after initial preference bootstrap (e.g. time-tracking).
+                preference = WorkspaceUserPreference.objects.create(
+                    key=key,
+                    user=request.user,
+                    workspace=workspace,
+                    is_pinned=bool(data.get("is_pinned", False)),
+                    sort_order=float(data.get("sort_order", 65535)),
+                )
                 continue
 
+            update_fields = []
             if "is_pinned" in data:
                 preference.is_pinned = data["is_pinned"]
+                update_fields.append("is_pinned")
 
             if "sort_order" in data:
                 preference.sort_order = data["sort_order"]
+                update_fields.append("sort_order")
 
-            preference.save(update_fields=["is_pinned", "sort_order"])
+            if update_fields:
+                preference.save(update_fields=update_fields)
 
         return Response({"message": "Successfully updated"}, status=status.HTTP_200_OK)

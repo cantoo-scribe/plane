@@ -874,5 +874,29 @@
       "short_description": "Eksportuj jako JSON"
     }
   },
-  "labels_count": "{count, plural, one {# etykieta} few {# etykiety} many {# etykiet} other {# etykiety}}"
+  "labels_count": "{count, plural, one {# etykieta} few {# etykiety} many {# etykiet} other {# etykiety}}",
+  "time_tracking_ui": {
+    "log_work": "Log work",
+    "edit_entry": "Edit time entry",
+    "log": "Log",
+    "start": "Start timer",
+    "stop": "Stop",
+    "running": "Running…",
+    "duration_required": "Duration must be greater than 0",
+    "description_placeholder": "What did you work on?",
+    "period": "Period",
+    "period_day": "Day",
+    "period_month": "Month",
+    "period_custom": "Custom",
+    "group_by": "Group by",
+    "user_project": "User × Project",
+    "user_breakdown": "Breakdown for {user}",
+    "summary": "Summary",
+    "total": "Total",
+    "duration": "Duration",
+    "entries": "Entries",
+    "descriptions": "Opisy"
+  },
+  "hours": "Hours",
+  "minutes": "Minutes"
 }

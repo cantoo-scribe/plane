@@ -9,7 +9,13 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Collapsible } from "@makeplane/propel/components/collapsible";
 // plane imports
-import { AnalyticsOutline, CyclesOutline, ProjectsOutline, ViewsOutline } from "@makeplane/propel/icons";
+import {
+  AnalyticsOutline,
+  CyclesOutline,
+  ProjectsOutline,
+  TimeTrackingOutline,
+  ViewsOutline,
+} from "@makeplane/propel/icons";
 import { useTranslation } from "@plane/i18n";
 import { EUserWorkspaceRoles } from "@plane/types";
 // hooks
@@ -56,6 +62,13 @@ export const SidebarWorkspaceMenu = observer(function SidebarWorkspaceMenu() {
       href: `/${workspaceSlug}/analytics/`,
       access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
       Icon: AnalyticsOutline,
+    },
+    {
+      key: "time-tracking",
+      labelTranslationKey: "time_tracking",
+      href: `/${workspaceSlug}/time-tracking/`,
+      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+      Icon: TimeTrackingOutline,
     },
   ];
 

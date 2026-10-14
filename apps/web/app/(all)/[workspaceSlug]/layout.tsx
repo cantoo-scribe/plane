@@ -9,6 +9,7 @@ import { AuthenticationWrapper } from "@/lib/wrappers/authentication-wrapper";
 import { WorkspaceContentWrapper } from "@/components/workspace/content-wrapper";
 import { AppRailVisibilityProvider } from "@/lib/app-rail";
 import { GlobalModals } from "@/components/common/modal/global";
+import { RunningTimerBar } from "@/components/time-tracking/running-timer-bar";
 import { WorkspaceAuthWrapper } from "@/layouts/auth-layout/workspace-wrapper";
 import type { Route } from "./+types/layout";
 
@@ -21,6 +22,7 @@ export default function WorkspaceLayout(props: Route.ComponentProps) {
         <AppRailVisibilityProvider>
           <WorkspaceContentWrapper>
             <GlobalModals workspaceSlug={workspaceSlug} />
+            <RunningTimerBar />
             <Outlet />
           </WorkspaceContentWrapper>
         </AppRailVisibilityProvider>

@@ -874,5 +874,29 @@
       "short_description": "Exportar como json"
     }
   },
-  "labels_count": "{count, plural, one {# etiqueta} other {# etiquetas}}"
+  "labels_count": "{count, plural, one {# etiqueta} other {# etiquetas}}",
+  "time_tracking_ui": {
+    "log_work": "Log work",
+    "edit_entry": "Edit time entry",
+    "log": "Log",
+    "start": "Start timer",
+    "stop": "Stop",
+    "running": "Running…",
+    "duration_required": "Duration must be greater than 0",
+    "description_placeholder": "What did you work on?",
+    "period": "Period",
+    "period_day": "Day",
+    "period_month": "Month",
+    "period_custom": "Custom",
+    "group_by": "Group by",
+    "user_project": "User × Project",
+    "user_breakdown": "Breakdown for {user}",
+    "summary": "Summary",
+    "total": "Total",
+    "duration": "Duration",
+    "entries": "Entries",
+    "descriptions": "Descripciones"
+  },
+  "hours": "Hours",
+  "minutes": "Minutes"
 }

@@ -72,6 +72,11 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/analytics/:tabId", "./(all)/[workspaceSlug]/(projects)/analytics/[tabId]/page.tsx"),
         ]),
 
+        // Time tracking (workspace reports)
+        layout("./(all)/[workspaceSlug]/(projects)/time-tracking/layout.tsx", [
+          route(":workspaceSlug/time-tracking", "./(all)/[workspaceSlug]/(projects)/time-tracking/page.tsx"),
+        ]),
+
         // Browse
         layout("./(all)/[workspaceSlug]/(projects)/browse/[workItem]/layout.tsx", [
           route(":workspaceSlug/browse/:workItem", "./(all)/[workspaceSlug]/(projects)/browse/[workItem]/page.tsx"),
@@ -282,6 +287,10 @@ export const coreRoutes: RouteConfigEntry[] = [
             ":workspaceSlug/settings/webhooks/:webhookId",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/[webhookId]/page.tsx"
           ),
+          route(
+            ":workspaceSlug/settings/time-tracking",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/time-tracking/page.tsx"
+          ),
         ]),
 
         // --------------------------------------------------------------------
@@ -322,6 +331,10 @@ export const coreRoutes: RouteConfigEntry[] = [
             route(
               ":workspaceSlug/settings/projects/:projectId/features/intake",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/intake/page.tsx"
+            ),
+            route(
+              ":workspaceSlug/settings/projects/:projectId/features/time-tracking",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/features/time-tracking/page.tsx"
             ),
             // Project States
             route(

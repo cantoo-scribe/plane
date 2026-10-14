@@ -1,0 +1,29 @@
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:3000 {
+	root * /usr/share/caddy/html
+
+	# No rate_limit on static SPA assets (see apps/web/caddy/Caddyfile).
+	# API/DB throttling lives in Django (USER_RATE_LIMIT, AUTHENTICATION_RATE_LIMIT, …).
+
+	# Security headers (HSTS is set at the TLS terminator)
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+	}
+
+	# SPA fallback
+	try_files {path} /index.html
+	file_server
+
+	# Access logs to stdout (default in Caddy)
+	log {
+		output stdout
+		format console
+	}
+}

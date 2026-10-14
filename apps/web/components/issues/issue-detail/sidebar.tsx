@@ -39,6 +39,7 @@ import { useUserProfile } from "@/hooks/store/user";
 // components
 import { IssueParentSelectRoot } from "@/components/issues/parent-select-root";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { IssueTimeTracking } from "@/components/time-tracking/issue-time-tracking";
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueModuleSelect } from "./module-select";
@@ -192,6 +193,13 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 />
               </SidebarPropertyListItem>
             )}
+
+            <IssueTimeTracking
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              issueId={issueId}
+              isEditable={isEditable}
+            />
 
             {projectDetails?.module_view && (
               <SidebarPropertyListItem icon={ModuleOutline} label={t("common.modules")}>
