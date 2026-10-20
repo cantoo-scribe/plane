@@ -29,6 +29,8 @@ export const CustomPropertyValueInput = observer(function CustomPropertyValueInp
     case "TEXT":
       return (
         <Input
+          size="md"
+          surface="field"
           value={value?.value_text ?? ""}
           disabled={disabled || property.settings?.readonly}
           onChange={(e) => onChange({ ...base, value_text: e.target.value })}
@@ -39,6 +41,8 @@ export const CustomPropertyValueInput = observer(function CustomPropertyValueInp
     case "NUMBER":
       return (
         <Input
+          size="md"
+          surface="field"
           type="number"
           value={value?.value_number ?? ""}
           disabled={disabled || property.settings?.readonly}
@@ -73,6 +77,8 @@ export const CustomPropertyValueInput = observer(function CustomPropertyValueInp
     case "DATE":
       return (
         <Input
+          size="md"
+          surface="field"
           type="date"
           value={value?.value_datetime ? value.value_datetime.slice(0, 10) : ""}
           disabled={disabled}

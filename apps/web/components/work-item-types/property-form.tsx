@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
-import { TextArea } from "@makeplane/propel/components/textarea";
+import { TextArea, TextAreaGroup } from "@makeplane/propel/components/text-area";
 import type { TIssueCustomProperty, TIssueCustomPropertyType } from "@plane/types";
 import { setToast } from "@plane/blocks/toast";
 import { useIssueType } from "@/hooks/store/use-issue-type";
@@ -115,15 +115,23 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
           : t("work_item_types.settings.properties.create_update.title.create")}
       </div>
       <Input
+        size="md"
+        surface="field"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder={t("work_item_types.settings.properties.create_update.form.display_name.placeholder")}
       />
-      <TextArea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder={t("work_item_types.settings.properties.create_update.form.description.placeholder")}
-      />
+      <TextAreaGroup resize="none">
+        <TextArea
+          size="md"
+          surface="field"
+          autoResize
+          maxRows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={t("work_item_types.settings.properties.create_update.form.description.placeholder")}
+        />
+      </TextAreaGroup>
       {!property && (
         <select
           className="text-sm rounded-md border border-subtle-1 bg-transparent px-3 py-2"
@@ -138,14 +146,22 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
         </select>
       )}
       {propertyType === "DROPDOWN" && !property && (
-        <TextArea
-          value={optionsText}
-          onChange={(e) => setOptionsText(e.target.value)}
-          placeholder="One option per line"
-        />
+        <TextAreaGroup resize="none">
+          <TextArea
+            size="md"
+            surface="field"
+            autoResize
+            maxRows={6}
+            value={optionsText}
+            onChange={(e) => setOptionsText(e.target.value)}
+            placeholder="One option per line"
+          />
+        </TextAreaGroup>
       )}
       {propertyType === "FORMULA" && (
         <Input
+          size="md"
+          surface="field"
           value={formula}
           onChange={(e) => setFormula(e.target.value)}
           placeholder={t("work_item_types.settings.properties.formula.placeholder")}

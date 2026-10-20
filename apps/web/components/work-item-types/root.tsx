@@ -121,6 +121,8 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
             {showTypeForm && (
               <div className="flex flex-col gap-2 rounded-md border border-subtle-1 p-3">
                 <Input
+                  size="md"
+                  surface="field"
                   value={newTypeName}
                   onChange={(e) => setNewTypeName(e.target.value)}
                   placeholder={t("work_item_types.create_update.form.name.placeholder")}
