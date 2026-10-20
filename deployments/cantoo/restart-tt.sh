@@ -24,8 +24,8 @@ if [[ -n "${migrator_id}" ]]; then
   echo ">> Migration OK"
 fi
 
-echo ">> Recreating api / worker / beat-worker / web..."
-"${COMPOSE[@]}" up -d --no-deps --force-recreate api worker beat-worker web
+echo ">> Recreating api / worker / beat-worker / web / space..."
+"${COMPOSE[@]}" up -d --no-deps --force-recreate api worker beat-worker web space
 
 echo ">> Status:"
 "${COMPOSE[@]}" ps

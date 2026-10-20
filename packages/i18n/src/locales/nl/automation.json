@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Je kunt het triggertype niet wijzigen nadat het is aangemaakt"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Mits",
       "add_condition": "Voorwaarde toevoegen",
-      "adding_condition": "Voorwaarde toevoegen"
+      "adding_condition": "Voorwaarde toevoegen",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Actie",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Reactie toevoegen",
         "change_property": "Eigenschap wijzigen",
-        "run_script": "Script uitvoeren"
+        "run_script": "Script uitvoeren",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Configuratie",

@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Anda tidak dapat mengubah jenis pemicu setelah dibuat"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Dengan syarat",
       "add_condition": "Tambah kondisi",
-      "adding_condition": "Menambah kondisi"
+      "adding_condition": "Menambah kondisi",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Aksi",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Tambah komentar",
         "change_property": "Ubah properti",
-        "run_script": "Jalankan Skrip"
+        "run_script": "Jalankan Skrip",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Konfigurasi",

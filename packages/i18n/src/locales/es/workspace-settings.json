@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "Automatizaciones",
+        "description": "Crea reglas que se ejecutan cuando los work items cambian en tu workspace.",
+        "title": "Automatizaciones"
+      },
       "webhooks": {
         "heading": "Webhooks",
         "description": "Automatiza las notificaciones a servicios externos cuando ocurren eventos del proyecto.",

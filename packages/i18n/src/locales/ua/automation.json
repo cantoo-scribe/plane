@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Неможливо змінити тип тригера після створення"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "За умови",
       "add_condition": "Додати умову",
-      "adding_condition": "Додавання умови"
+      "adding_condition": "Додавання умови",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Дія",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Додати коментар",
         "change_property": "Змінити властивість",
-        "run_script": "Запустити скрипт"
+        "run_script": "Запустити скрипт",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Конфігурація",

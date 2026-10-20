@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Você não pode alterar o tipo do gatilho após a criação"
+      },
+      "options": {
+        "issue_created": "Work item criado",
+        "state_changed": "Estado alterado",
+        "assignee_changed": "Responsável alterado"
       }
     },
     "condition": {
       "label": "Condição",
       "add_condition": "Adicionar condição",
-      "adding_condition": "Adicionando condição"
+      "adding_condition": "Adicionando condição",
+      "fields": {
+        "state": "Estado",
+        "priority": "Prioridade",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Ação",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Adicionar comentário",
         "change_property": "Alterar propriedade",
-        "run_script": "Executar Script"
+        "run_script": "Executar Script",
+        "change_state": "Alterar estado",
+        "assign": "Atribuir"
       },
       "configuration": {
         "label": "Configuração",

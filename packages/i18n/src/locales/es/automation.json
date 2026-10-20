@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "No puedes cambiar el tipo de disparador una vez creado"
+      },
+      "options": {
+        "issue_created": "Work item creado",
+        "state_changed": "Estado cambiado",
+        "assignee_changed": "Asignado cambiado"
       }
     },
     "condition": {
       "label": "Siempre que",
       "add_condition": "Agregar condición",
-      "adding_condition": "Agregando condición"
+      "adding_condition": "Agregando condición",
+      "fields": {
+        "state": "Estado",
+        "priority": "Prioridad",
+        "label": "Etiqueta"
+      }
     },
     "action": {
       "label": "Acción",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Agregar comentario",
         "change_property": "Cambiar propiedad",
-        "run_script": "Ejecutar script"
+        "run_script": "Ejecutar script",
+        "change_state": "Cambiar estado",
+        "assign": "Asignar"
       },
       "configuration": {
         "label": "Configuración",

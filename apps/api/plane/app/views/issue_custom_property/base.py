@@ -4,7 +4,6 @@
 
 # Django imports
 from django.db import IntegrityError, transaction
-from django.utils.dateparse import parse_datetime
 
 # Third party imports
 from rest_framework import status
@@ -29,6 +28,11 @@ from plane.db.models import (
     Project,
     ProjectIssueType,
     Workspace,
+)
+from plane.utils.issue_custom_property_values import (
+    apply_value_payload as _apply_value_payload,
+    evaluate_formula,  # noqa: F401 — re-export for backwards compatibility
+    upsert_property_values,
 )
 
 
@@ -257,98 +261,6 @@ class IssueCustomPropertyOptionViewSet(BaseViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _apply_value_payload(value_obj, prop, payload):
-    """Apply typed fields from a write payload onto a value instance."""
-    property_type = prop.property_type
-
-    if property_type == IssueCustomPropertyType.TEXT:
-        value_obj.value_text = payload.get("value_text")
-        value_obj.value_number = None
-        value_obj.value_boolean = None
-        value_obj.value_datetime = None
-    elif property_type == IssueCustomPropertyType.NUMBER:
-        value_obj.value_number = payload.get("value_number")
-        value_obj.value_text = None
-        value_obj.value_boolean = None
-        value_obj.value_datetime = None
-    elif property_type == IssueCustomPropertyType.BOOLEAN:
-        value_obj.value_boolean = payload.get("value_boolean")
-        value_obj.value_text = None
-        value_obj.value_number = None
-        value_obj.value_datetime = None
-    elif property_type == IssueCustomPropertyType.DATE:
-        raw = payload.get("value_datetime")
-        if isinstance(raw, str):
-            raw = parse_datetime(raw)
-        value_obj.value_datetime = raw
-        value_obj.value_text = None
-        value_obj.value_number = None
-        value_obj.value_boolean = None
-    elif property_type == IssueCustomPropertyType.FORMULA:
-        # Formula values are computed server-side; store as text/number preview
-        value_obj.value_text = payload.get("value_text")
-        value_obj.value_number = payload.get("value_number")
-    elif property_type in (IssueCustomPropertyType.DROPDOWN, IssueCustomPropertyType.MEMBER):
-        value_obj.value_text = None
-        value_obj.value_number = None
-        value_obj.value_boolean = None
-        value_obj.value_datetime = None
-
-    value_obj.save()
-
-    if property_type == IssueCustomPropertyType.DROPDOWN:
-        option_ids = payload.get("value_option_ids") or []
-        options = IssueCustomPropertyOption.objects.filter(property=prop, id__in=option_ids)
-        value_obj.value_options.set(options)
-        value_obj.value_members.clear()
-    elif property_type == IssueCustomPropertyType.MEMBER:
-        member_ids = payload.get("value_member_ids") or []
-        value_obj.value_members.set(member_ids)
-        value_obj.value_options.clear()
-    else:
-        value_obj.value_options.clear()
-        value_obj.value_members.clear()
-
-    return value_obj
-
-
-def evaluate_formula(expression, property_values_by_name):
-    """
-    Evaluate a simple formula referencing properties by {Name}.
-    Supports +, -, *, /, and string concat via &.
-    """
-    if not expression or not isinstance(expression, str):
-        raise ValueError("Formula expression is required")
-
-    import re
-
-    refs = re.findall(r"\{([^}]+)\}", expression)
-    resolved = expression
-    for ref in refs:
-        if ref not in property_values_by_name:
-            raise ValueError(f"Formula references non-existent property: {ref}")
-        val = property_values_by_name[ref]
-        if val is None:
-            val = 0
-        if isinstance(val, str):
-            resolved = resolved.replace(f"{{{ref}}}", f'"{val}"')
-        else:
-            resolved = resolved.replace(f"{{{ref}}}", str(val))
-
-    # Replace & concat with Python + for strings — keep numeric ops
-    # Only allow safe characters after substitution
-    if not re.fullmatch(r'[\d\s\.\+\-\*/\(\)"&]+', resolved.replace("&", "+")):
-        raise ValueError("Invalid formula")
-
-    # Convert & to + for evaluation (string concat / numeric add)
-    eval_expr = resolved.replace("&", "+")
-    try:
-        result = eval(eval_expr, {"__builtins__": {}}, {})  # noqa: S307 — restricted expr
-    except Exception as exc:
-        raise ValueError(f"Invalid formula: {exc}") from exc
-    return result
-
-
 class IssueCustomPropertyValueEndpoint(BaseAPIView):
     """List and bulk upsert custom property values for an issue."""
 
@@ -382,122 +294,21 @@ class IssueCustomPropertyValueEndpoint(BaseAPIView):
 
         project = Project.objects.get(pk=project_id)
         payloads = request.data if isinstance(request.data, list) else [request.data]
-        results = []
+        validated_payloads = []
         errors = {}
 
+        for payload in payloads:
+            write = IssueCustomPropertyValueWriteSerializer(data=payload)
+            if not write.is_valid():
+                errors[str(payload.get("property_id"))] = write.errors
+                continue
+            validated_payloads.append(write.validated_data)
+
         with transaction.atomic():
-            for payload in payloads:
-                write = IssueCustomPropertyValueWriteSerializer(data=payload)
-                if not write.is_valid():
-                    errors[str(payload.get("property_id"))] = write.errors
-                    continue
+            results, upsert_errors = upsert_property_values(issue, project, validated_payloads)
+            errors.update(upsert_errors)
+            serialized = IssueCustomPropertyValueSerializer(results, many=True).data
 
-                prop = IssueCustomProperty.objects.filter(
-                    pk=write.validated_data["property_id"],
-                    workspace__slug=slug,
-                    is_active=True,
-                ).first()
-                if not prop:
-                    errors[str(write.validated_data["property_id"])] = "Property not found"
-                    continue
-
-                if issue.type_id and prop.issue_type_id != issue.type_id:
-                    errors[str(prop.id)] = "Property does not belong to this work item type"
-                    continue
-
-                if prop.is_required:
-                    empty = self._is_empty_value(prop, write.validated_data)
-                    if empty:
-                        errors[str(prop.id)] = "This property is required"
-                        continue
-
-                value_obj, _ = IssueCustomPropertyValue.objects.get_or_create(
-                    issue=issue,
-                    property=prop,
-                    defaults={
-                        "workspace": project.workspace,
-                        "project": project,
-                    },
-                )
-                _apply_value_payload(value_obj, prop, write.validated_data)
-
-                # Recompute formula properties on the same type
-                self._recompute_formulas(issue, project, prop.issue_type_id)
-
-                value_obj.refresh_from_db()
-                results.append(IssueCustomPropertyValueSerializer(value_obj).data)
-
-        if errors and not results:
+        if errors and not serialized:
             return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"values": results, "errors": errors}, status=status.HTTP_200_OK)
-
-    def _is_empty_value(self, prop, data):
-        t = prop.property_type
-        if t == IssueCustomPropertyType.TEXT:
-            return not data.get("value_text")
-        if t == IssueCustomPropertyType.NUMBER:
-            return data.get("value_number") is None
-        if t == IssueCustomPropertyType.BOOLEAN:
-            return data.get("value_boolean") is None
-        if t == IssueCustomPropertyType.DATE:
-            return data.get("value_datetime") is None
-        if t == IssueCustomPropertyType.DROPDOWN:
-            return not data.get("value_option_ids")
-        if t == IssueCustomPropertyType.MEMBER:
-            return not data.get("value_member_ids")
-        return False
-
-    def _recompute_formulas(self, issue, project, issue_type_id):
-        formula_props = IssueCustomProperty.objects.filter(
-            issue_type_id=issue_type_id,
-            property_type=IssueCustomPropertyType.FORMULA,
-            is_active=True,
-        )
-        if not formula_props.exists():
-            return
-
-        all_props = IssueCustomProperty.objects.filter(issue_type_id=issue_type_id, is_active=True)
-        values = {
-            str(v.property_id): v
-            for v in IssueCustomPropertyValue.objects.filter(issue=issue, property__issue_type_id=issue_type_id)
-            .prefetch_related("value_options")
-            .select_related("property")
-        }
-        by_name = {}
-        for prop in all_props:
-            v = values.get(str(prop.id))
-            if not v:
-                by_name[prop.name] = None
-                continue
-            if prop.property_type == IssueCustomPropertyType.NUMBER:
-                by_name[prop.name] = v.value_number
-            elif prop.property_type == IssueCustomPropertyType.TEXT:
-                by_name[prop.name] = v.value_text or ""
-            elif prop.property_type == IssueCustomPropertyType.BOOLEAN:
-                by_name[prop.name] = 1 if v.value_boolean else 0
-            elif prop.property_type == IssueCustomPropertyType.FORMULA:
-                by_name[prop.name] = v.value_number if v.value_number is not None else v.value_text
-            else:
-                by_name[prop.name] = v.value_text
-
-        for fprop in formula_props:
-            expression = (fprop.settings or {}).get("formula") or (fprop.default_value if isinstance(fprop.default_value, str) else None)
-            if not expression:
-                continue
-            try:
-                result = evaluate_formula(expression, by_name)
-            except ValueError:
-                continue
-            value_obj, _ = IssueCustomPropertyValue.objects.get_or_create(
-                issue=issue,
-                property=fprop,
-                defaults={"workspace": project.workspace, "project": project},
-            )
-            if isinstance(result, (int, float)) and not isinstance(result, bool):
-                value_obj.value_number = float(result)
-                value_obj.value_text = str(result)
-            else:
-                value_obj.value_text = str(result)
-                value_obj.value_number = None
-            value_obj.save()
-            by_name[fprop.name] = result
+        return Response({"values": serialized, "errors": errors}, status=status.HTTP_200_OK)

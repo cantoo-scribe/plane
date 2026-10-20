@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "Automations",
+        "description": "Create rules that run when work items change across your workspace.",
+        "title": "Automations"
+      },
       "webhooks": {
         "heading": "Webhook",
         "description": "Tự động hóa thông báo đến các dịch vụ bên ngoài khi các sự kiện dự án xảy ra.",

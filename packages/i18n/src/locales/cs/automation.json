@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Po vytvoření nelze typ spouštěče změnit"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Za předpokladu",
       "add_condition": "Přidat podmínku",
-      "adding_condition": "Přidávání podmínky"
+      "adding_condition": "Přidávání podmínky",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Akce",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Přidat komentář",
         "change_property": "Změnit vlastnost",
-        "run_script": "Spustit skript"
+        "run_script": "Spustit skript",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Konfigurace",

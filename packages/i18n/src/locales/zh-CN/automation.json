@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "创建后无法更改触发器类型"
+      },
+      "options": {
+        "issue_created": "工作项已创建",
+        "state_changed": "状态已更改",
+        "assignee_changed": "负责人已更改"
       }
     },
     "condition": {
       "label": "条件",
       "add_condition": "添加条件",
-      "adding_condition": "正在添加条件"
+      "adding_condition": "正在添加条件",
+      "fields": {
+        "state": "状态",
+        "priority": "优先级",
+        "label": "标签"
+      }
     },
     "action": {
       "label": "操作",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "添加评论",
         "change_property": "更改属性",
-        "run_script": "运行脚本"
+        "run_script": "运行脚本",
+        "change_state": "更改状态",
+        "assign": "指派"
       },
       "configuration": {
         "label": "配置",

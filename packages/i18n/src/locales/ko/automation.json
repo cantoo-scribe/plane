@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "생성 후에는 트리거 유형을 변경할 수 없습니다"
+      },
+      "options": {
+        "issue_created": "워크 아이템 생성됨",
+        "state_changed": "상태 변경됨",
+        "assignee_changed": "담당자 변경됨"
       }
     },
     "condition": {
       "label": "조건",
       "add_condition": "조건 추가",
-      "adding_condition": "조건 추가 중"
+      "adding_condition": "조건 추가 중",
+      "fields": {
+        "state": "상태",
+        "priority": "우선순위",
+        "label": "레이블"
+      }
     },
     "action": {
       "label": "액션",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "댓글 추가",
         "change_property": "속성 변경",
-        "run_script": "스크립트 실행"
+        "run_script": "스크립트 실행",
+        "change_state": "상태 변경",
+        "assign": "담당자 지정"
       },
       "configuration": {
         "label": "설정",

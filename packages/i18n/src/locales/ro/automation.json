@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Nu poți schimba tipul declanșatorului după ce a fost creat"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Condiție",
       "add_condition": "Adaugă condiție",
-      "adding_condition": "Se adaugă condiția"
+      "adding_condition": "Se adaugă condiția",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Acțiune",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Adaugă comentariu",
         "change_property": "Schimbă proprietatea",
-        "run_script": "Rulează script"
+        "run_script": "Rulează script",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Configurare",

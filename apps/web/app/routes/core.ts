@@ -288,6 +288,14 @@ export const coreRoutes: RouteConfigEntry[] = [
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/[webhookId]/page.tsx"
           ),
           route(
+            ":workspaceSlug/settings/automations",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/automations/page.tsx"
+          ),
+          route(
+            ":workspaceSlug/settings/automations/:automationId",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/automations/[automationId]/page.tsx"
+          ),
+          route(
             ":workspaceSlug/settings/time-tracking",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/time-tracking/page.tsx"
           ),
@@ -355,6 +363,11 @@ export const coreRoutes: RouteConfigEntry[] = [
             route(
               ":workspaceSlug/settings/projects/:projectId/work-item-types",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/work-item-types/page.tsx"
+            ),
+            // Project Forms
+            route(
+              ":workspaceSlug/settings/projects/:projectId/forms",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/forms/page.tsx"
             ),
             // Project Automations
             layout("./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout.tsx", [

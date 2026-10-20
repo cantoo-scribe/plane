@@ -1598,6 +1598,20 @@ def issue_activity(
                 current_instance=current_instance,
             )
 
+        # Evaluate workspace automations for issue create/update events
+        if type in ("issue.activity.created", "issue.activity.updated") and issue_id is not None:
+            from plane.bgtasks.workspace_automation_task import evaluate_workspace_automations
+
+            evaluate_workspace_automations.delay(
+                activity_type=type,
+                requested_data=requested_data,
+                current_instance=current_instance,
+                issue_id=str(issue_id),
+                actor_id=str(actor_id),
+                project_id=str(project_id),
+                workspace_id=str(workspace_id),
+            )
+
         return
     except Exception as e:
         log_exception(e)

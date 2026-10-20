@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "You can't change the trigger type once created"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Provided",
       "add_condition": "Add condition",
-      "adding_condition": "Adding condition"
+      "adding_condition": "Adding condition",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Action",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Add comment",
         "change_property": "Change property",
-        "run_script": "Run Script"
+        "run_script": "Run Script",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Configuration",

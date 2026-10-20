@@ -132,6 +132,12 @@ from .notification import NotificationSerializer, UserNotificationPreferenceSeri
 from .exporter import ExporterHistorySerializer
 
 from .webhook import WebhookSerializer, WebhookLogSerializer
+from .automation import (
+    WorkspaceAutomationSerializer,
+    WorkspaceAutomationConditionSerializer,
+    WorkspaceAutomationActionSerializer,
+    WorkspaceAutomationRunSerializer,
+)
 
 from .favorite import UserFavoriteSerializer
 
@@ -147,4 +153,9 @@ from .issue_custom_property import (
     IssueCustomPropertySerializer,
     IssueCustomPropertyValueSerializer,
     IssueCustomPropertyValueWriteSerializer,
+)
+from .issue_form import (
+    IssueFormFieldSerializer,
+    IssueFormSerializer,
+    IssueFormSubmitSerializer,
 )

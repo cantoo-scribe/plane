@@ -12,6 +12,7 @@
 #   REMOTE_APP_DIR    default: ~/plane-selfhost/plane-app
 #   REMOTE_STAGING    default: ~/plane-tt-images
 #   FRONTEND_IMAGE    default: cantoo/plane-frontend:tt
+#   SPACE_IMAGE       default: cantoo/plane-space:tt
 #   BACKEND_IMAGE     default: cantoo/plane-backend:tt
 #   HEALTH_URL        default: https://plane.cantoo.fr/api/instances/
 set -euo pipefail
@@ -23,11 +24,13 @@ SSH_HOST="${SSH_HOST:-ubuntu@plane.cantoo.fr}"
 REMOTE_APP_DIR="${REMOTE_APP_DIR:-~/plane-selfhost/plane-app}"
 REMOTE_STAGING="${REMOTE_STAGING:-~/plane-tt-images}"
 FRONTEND_IMAGE="${FRONTEND_IMAGE:-cantoo/plane-frontend:tt}"
+SPACE_IMAGE="${SPACE_IMAGE:-cantoo/plane-space:tt}"
 BACKEND_IMAGE="${BACKEND_IMAGE:-cantoo/plane-backend:tt}"
 HEALTH_URL="${HEALTH_URL:-https://plane.cantoo.fr/api/instances/}"
 
 SKIP_BUILD=0
 SKIP_FRONTEND=0
+SKIP_SPACE=0
 SKIP_BACKEND=0
 SKIP_HEALTH=0
 DRY_RUN=0
@@ -39,6 +42,7 @@ usage() {
 Flags:
   --skip-build       Reuse existing local images (no docker build)
   --skip-frontend    Do not build/transfer frontend image
+  --skip-space       Do not build/transfer space image
   --skip-backend     Do not build/transfer backend image
   --skip-health      Skip post-deploy HTTP check
   --dry-run          Print steps only
@@ -50,6 +54,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1 ;;
     --skip-frontend) SKIP_FRONTEND=1 ;;
+    --skip-space) SKIP_SPACE=1 ;;
     --skip-backend) SKIP_BACKEND=1 ;;
     --skip-health) SKIP_HEALTH=1 ;;
     --dry-run) DRY_RUN=1 ;;
@@ -91,7 +96,7 @@ trap cleanup EXIT
 
 log "SSH host: ${SSH_HOST}"
 log "Remote app: ${REMOTE_APP_DIR}"
-log "Images: ${FRONTEND_IMAGE} / ${BACKEND_IMAGE}"
+log "Images: ${FRONTEND_IMAGE} / ${SPACE_IMAGE} / ${BACKEND_IMAGE}"
 
 # --- connectivity ---
 log "Checking SSH..."
@@ -108,6 +113,10 @@ if [[ "${SKIP_BUILD}" -eq 0 ]]; then
   if [[ "${SKIP_FRONTEND}" -eq 0 ]]; then
     log "Building ${FRONTEND_IMAGE}..."
     run "docker build -t '${FRONTEND_IMAGE}' -f '${ROOT_DIR}/apps/web/Dockerfile.web' '${ROOT_DIR}'"
+  fi
+  if [[ "${SKIP_SPACE}" -eq 0 ]]; then
+    log "Building ${SPACE_IMAGE}..."
+    run "docker build -t '${SPACE_IMAGE}' -f '${ROOT_DIR}/apps/space/Dockerfile.space' '${ROOT_DIR}'"
   fi
 else
   log "Skipping build (--skip-build)"
@@ -131,6 +140,15 @@ if [[ "${SKIP_FRONTEND}" -eq 0 ]]; then
     ARTIFACTS+=("${STAGING_DIR}/plane-frontend-tt.tar.gz")
   else
     run "docker save '${FRONTEND_IMAGE}' | gzip -1 >'${STAGING_DIR}/plane-frontend-tt.tar.gz'"
+  fi
+fi
+if [[ "${SKIP_SPACE}" -eq 0 ]]; then
+  log "Saving ${SPACE_IMAGE}..."
+  if [[ "${DRY_RUN}" -eq 0 ]]; then
+    docker save "${SPACE_IMAGE}" | gzip -1 >"${STAGING_DIR}/plane-space-tt.tar.gz"
+    ARTIFACTS+=("${STAGING_DIR}/plane-space-tt.tar.gz")
+  else
+    run "docker save '${SPACE_IMAGE}' | gzip -1 >'${STAGING_DIR}/plane-space-tt.tar.gz'"
   fi
 fi
 
@@ -157,6 +175,9 @@ if [[ "${SKIP_BACKEND}" -eq 0 ]]; then
 fi
 if [[ "${SKIP_FRONTEND}" -eq 0 ]]; then
   load_cmds+=("gunzip -c ${REMOTE_STAGING}/plane-frontend-tt.tar.gz | docker load")
+fi
+if [[ "${SKIP_SPACE}" -eq 0 ]]; then
+  load_cmds+=("gunzip -c ${REMOTE_STAGING}/plane-space-tt.tar.gz | docker load")
 fi
 if [[ "${#load_cmds[@]}" -gt 0 ]]; then
   log "Loading images on VPS..."

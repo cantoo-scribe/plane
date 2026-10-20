@@ -6,6 +6,8 @@ services:
     # Override baked Caddyfile until next frontend image rebuild embeds the fix
     volumes:
       - ./Caddyfile.web:/etc/caddy/Caddyfile:ro
+  space:
+    image: cantoo/plane-space:tt
   api:
     image: cantoo/plane-backend:tt
   worker:

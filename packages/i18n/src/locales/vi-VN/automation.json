@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Bạn không thể thay đổi loại kích hoạt sau khi đã tạo"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Điều kiện",
       "add_condition": "Thêm điều kiện",
-      "adding_condition": "Đang thêm điều kiện"
+      "adding_condition": "Đang thêm điều kiện",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Hành động",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Thêm bình luận",
         "change_property": "Thay đổi thuộc tính",
-        "run_script": "Chạy script"
+        "run_script": "Chạy script",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Cấu hình",

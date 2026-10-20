@@ -66,6 +66,17 @@ from .state import State, StateGroup, DEFAULT_STATES
 from .user import Account, Profile, User, BotTypeEnum
 from .view import IssueView
 from .webhook import Webhook, WebhookLog
+from .automation import (
+    WorkspaceAutomation,
+    WorkspaceAutomationAction,
+    WorkspaceAutomationCondition,
+    WorkspaceAutomationRun,
+    WorkspaceAutomationActionType,
+    WorkspaceAutomationConditionField,
+    WorkspaceAutomationConditionOperator,
+    WorkspaceAutomationRunStatus,
+    WorkspaceAutomationTriggerType,
+)
 from .workspace import (
     Workspace,
     WorkspaceBaseModel,
@@ -87,6 +98,14 @@ from .issue_custom_property import (
     IssueCustomPropertyOption,
     IssueCustomPropertyType,
     IssueCustomPropertyValue,
+)
+
+from .issue_form import (
+    IssueForm,
+    IssueFormCoreKey,
+    IssueFormField,
+    IssueFormFieldTargetKind,
+    PUBLIC_FORM_CUSTOM_PROPERTY_TYPES,
 )
 
 from .recent_visit import UserRecentVisit

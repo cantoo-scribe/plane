@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "自动化",
+        "description": "创建在工作区中工作项变更时运行的规则。",
+        "title": "自动化"
+      },
       "webhooks": {
         "heading": "Webhooks",
         "description": "在项目事件发生时自动向外部服务发送通知。",

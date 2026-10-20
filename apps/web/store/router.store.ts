@@ -27,6 +27,7 @@ export interface IRouterStore {
   issueId: string | undefined;
   inboxId: string | undefined;
   webhookId: string | undefined;
+  automationId: string | undefined;
   epicId: string | undefined;
 }
 
@@ -54,6 +55,7 @@ export class RouterStore implements IRouterStore {
       issueId: computed,
       inboxId: computed,
       webhookId: computed,
+      automationId: computed,
       epicId: computed,
     });
   }
@@ -170,6 +172,14 @@ export class RouterStore implements IRouterStore {
    */
   get webhookId() {
     return this.query?.webhookId?.toString();
+  }
+
+  /**
+   * Returns the automation id from the query
+   * @returns string|undefined
+   */
+  get automationId() {
+    return this.query?.automationId?.toString();
   }
 
   /**

@@ -241,6 +241,11 @@ from .webhook.base import (
     WebhookSecretRegenerateEndpoint,
 )
 
+from .automation.base import (
+    WorkspaceAutomationEndpoint,
+    WorkspaceAutomationRunEndpoint,
+)
+
 from .error_404 import custom_404_view
 
 from .notification.base import MarkAllReadNotificationViewSet
@@ -254,3 +259,4 @@ from .issue_custom_property.base import (
     IssueCustomPropertyValueEndpoint,
     IssueCustomPropertyViewSet,
 )
+from .issue_form import IssueFormFieldViewSet, IssueFormViewSet

@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Oluşturulduktan sonra tetikleyici türünü değiştiremezsiniz"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Sağlanan",
       "add_condition": "Koşul ekle",
-      "adding_condition": "Koşul ekleniyor"
+      "adding_condition": "Koşul ekleniyor",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Eylem",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Yorum ekle",
         "change_property": "Özelliği değiştir",
-        "run_script": "Komut Dosyası Çalıştır"
+        "run_script": "Komut Dosyası Çalıştır",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Yapılandırma",

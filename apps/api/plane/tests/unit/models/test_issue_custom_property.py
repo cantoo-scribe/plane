@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from plane.app.views.issue_custom_property.base import evaluate_formula
+from plane.utils.issue_custom_property_values import evaluate_formula
 from plane.db.models import (
     Issue,
     IssueCustomProperty,

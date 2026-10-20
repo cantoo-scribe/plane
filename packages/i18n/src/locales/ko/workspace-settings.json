@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "자동화",
+        "description": "워크스페이스에서 워크 아이템이 변경될 때 실행되는 규칙을 만드세요.",
+        "title": "자동화"
+      },
       "webhooks": {
         "heading": "웹훅",
         "description": "프로젝트 이벤트가 발생할 때 외부 서비스로 알림을 자동화하세요.",

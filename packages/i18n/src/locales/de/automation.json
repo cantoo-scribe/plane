@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Sie können den Auslösertyp nach der Erstellung nicht mehr ändern"
+      },
+      "options": {
+        "issue_created": "Work item erstellt",
+        "state_changed": "Status geändert",
+        "assignee_changed": "Zugewiesene Person geändert"
       }
     },
     "condition": {
       "label": "Vorausgesetzt",
       "add_condition": "Bedingung hinzufügen",
-      "adding_condition": "Bedingung hinzufügen"
+      "adding_condition": "Bedingung hinzufügen",
+      "fields": {
+        "state": "Status",
+        "priority": "Priorität",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Aktion",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Kommentar hinzufügen",
         "change_property": "Eigenschaft ändern",
-        "run_script": "Skript ausführen"
+        "run_script": "Skript ausführen",
+        "change_state": "Status ändern",
+        "assign": "Zuweisen"
       },
       "configuration": {
         "label": "Konfiguration",

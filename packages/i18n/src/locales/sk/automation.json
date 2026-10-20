@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Typ spúšťača nie je možné po vytvorení zmeniť"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Podmienka",
       "add_condition": "Pridať podmienku",
-      "adding_condition": "Pridávanie podmienky"
+      "adding_condition": "Pridávanie podmienky",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Akcia",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Pridať komentár",
         "change_property": "Zmeniť vlastnosť",
-        "run_script": "Spustiť skript"
+        "run_script": "Spustiť skript",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Konfigurácia",

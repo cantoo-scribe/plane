@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "作成後はトリガータイプを変更できません"
+      },
+      "options": {
+        "issue_created": "ワークアイテムが作成されたとき",
+        "state_changed": "状態が変更されたとき",
+        "assignee_changed": "担当者が変更されたとき"
       }
     },
     "condition": {
       "label": "条件",
       "add_condition": "条件を追加",
-      "adding_condition": "条件を追加中"
+      "adding_condition": "条件を追加中",
+      "fields": {
+        "state": "状態",
+        "priority": "優先度",
+        "label": "ラベル"
+      }
     },
     "action": {
       "label": "アクション",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "コメントを追加",
         "change_property": "プロパティを変更",
-        "run_script": "スクリプトを実行"
+        "run_script": "スクリプトを実行",
+        "change_state": "状態を変更",
+        "assign": "担当者を割り当て"
       },
       "configuration": {
         "label": "設定",

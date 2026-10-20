@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "自動化",
+        "description": "ワークスペース内のワークアイテムが変更されたときに実行されるルールを作成します。",
+        "title": "自動化"
+      },
       "webhooks": {
         "heading": "Webhook",
         "description": "プロジェクトイベントが発生したときに、外部サービスへの通知を自動化します。",

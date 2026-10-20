@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Vous ne pouvez pas modifier le type de déclencheur une fois qu’il a été créé"
+      },
+      "options": {
+        "issue_created": "Work item créé",
+        "state_changed": "État modifié",
+        "assignee_changed": "Assigné modifié"
       }
     },
     "condition": {
       "label": "À condition que",
       "add_condition": "Ajouter une condition",
-      "adding_condition": "Ajout d'une condition"
+      "adding_condition": "Ajout d'une condition",
+      "fields": {
+        "state": "État",
+        "priority": "Priorité",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Action",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Ajouter un commentaire",
         "change_property": "Modifier la propriété",
-        "run_script": "Exécuter un script"
+        "run_script": "Exécuter un script",
+        "change_state": "Changer l'état",
+        "assign": "Assigner"
       },
       "configuration": {
         "label": "Configuration",

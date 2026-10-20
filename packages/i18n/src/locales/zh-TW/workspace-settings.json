@@ -97,6 +97,11 @@
           }
         }
       },
+      "automations": {
+        "heading": "自動化",
+        "description": "建立在工作區中工作項變更時執行的規則。",
+        "title": "自動化"
+      },
       "webhooks": {
         "heading": "Webhooks",
         "description": "當專案事件發生時，自動向外部服務傳送通知。",

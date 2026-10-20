@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Po utworzeniu nie można zmienić typu wyzwalacza"
+      },
+      "options": {
+        "issue_created": "Work item created",
+        "state_changed": "State changed",
+        "assignee_changed": "Assignee changed"
       }
     },
     "condition": {
       "label": "Warunek",
       "add_condition": "Dodaj warunek",
-      "adding_condition": "Dodawanie warunku"
+      "adding_condition": "Dodawanie warunku",
+      "fields": {
+        "state": "State",
+        "priority": "Priority",
+        "label": "Label"
+      }
     },
     "action": {
       "label": "Akcja",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Dodaj komentarz",
         "change_property": "Zmień właściwość",
-        "run_script": "Uruchom skrypt"
+        "run_script": "Uruchom skrypt",
+        "change_state": "Change state",
+        "assign": "Assign"
       },
       "configuration": {
         "label": "Konfiguracja",

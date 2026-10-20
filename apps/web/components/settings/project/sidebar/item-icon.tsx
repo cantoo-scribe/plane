@@ -6,6 +6,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  ClipboardOutline,
   CyclesOutline,
   EstimateOutline,
   IntakeOutline,
@@ -38,5 +39,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   labels: LabelsOutline,
   estimates: EstimateOutline,
   work_item_types: PropertiesOutline,
+  forms: ClipboardOutline,
   automations: TriggerOutline,
 };

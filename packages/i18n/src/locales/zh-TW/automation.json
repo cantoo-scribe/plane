@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "建立後即無法變更觸發器類型"
+      },
+      "options": {
+        "issue_created": "工作項已建立",
+        "state_changed": "狀態已變更",
+        "assignee_changed": "負責人已變更"
       }
     },
     "condition": {
       "label": "條件",
       "add_condition": "新增條件",
-      "adding_condition": "正在新增條件"
+      "adding_condition": "正在新增條件",
+      "fields": {
+        "state": "狀態",
+        "priority": "優先順序",
+        "label": "標籤"
+      }
     },
     "action": {
       "label": "動作",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "新增評論",
         "change_property": "變更屬性",
-        "run_script": "執行指令碼"
+        "run_script": "執行指令碼",
+        "change_state": "變更狀態",
+        "assign": "指派"
       },
       "configuration": {
         "label": "設定",

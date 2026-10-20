@@ -56,12 +56,22 @@
       },
       "warning": {
         "disabled_trigger_switching": "Нельзя изменить тип триггера после создания"
+      },
+      "options": {
+        "issue_created": "Work item создан",
+        "state_changed": "Статус изменён",
+        "assignee_changed": "Исполнитель изменён"
       }
     },
     "condition": {
       "label": "Условие",
       "add_condition": "Добавить условие",
-      "adding_condition": "Добавление условия"
+      "adding_condition": "Добавление условия",
+      "fields": {
+        "state": "Статус",
+        "priority": "Приоритет",
+        "label": "Метка"
+      }
     },
     "action": {
       "label": "Действие",
@@ -72,7 +82,9 @@
       "handler_name": {
         "add_comment": "Добавить комментарий",
         "change_property": "Изменить свойство",
-        "run_script": "Запустить скрипт"
+        "run_script": "Запустить скрипт",
+        "change_state": "Изменить статус",
+        "assign": "Назначить"
       },
       "configuration": {
         "label": "Конфигурация",
