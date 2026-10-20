@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
+import { Switch } from "@makeplane/propel/components/switch";
 import { TextArea, TextAreaGroup } from "@makeplane/propel/components/text-area";
 import type { TIssueCustomProperty, TIssueCustomPropertyType } from "@plane/types";
 import { setToast } from "@plane/blocks/toast";
@@ -108,76 +109,121 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-subtle-1 p-4">
-      <div className="text-sm font-medium">
+    <div className="flex flex-col gap-4 rounded-lg border border-subtle bg-layer-2 p-4">
+      <div className="text-body-sm-medium text-primary">
         {property
           ? t("work_item_types.settings.properties.create_update.title.update")
           : t("work_item_types.settings.properties.create_update.title.create")}
       </div>
-      <Input
-        size="md"
-        surface="field"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={t("work_item_types.settings.properties.create_update.form.display_name.placeholder")}
-      />
-      <TextAreaGroup resize="none">
-        <TextArea
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-caption-md-medium text-secondary">{t("common.title")}</label>
+        <Input
           size="md"
           surface="field"
-          autoResize
-          maxRows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder={t("work_item_types.settings.properties.create_update.form.description.placeholder")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("work_item_types.settings.properties.create_update.form.display_name.placeholder")}
         />
-      </TextAreaGroup>
-      {!property && (
-        <select
-          className="text-sm rounded-md border border-subtle-1 bg-transparent px-3 py-2"
-          value={propertyType}
-          onChange={(e) => setPropertyType(e.target.value as TIssueCustomPropertyType)}
-        >
-          {PROPERTY_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {t(`work_item_types.settings.properties.property_type.${type.toLowerCase()}.label`)}
-            </option>
-          ))}
-        </select>
-      )}
-      {propertyType === "DROPDOWN" && !property && (
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-caption-md-medium text-secondary">{t("common.description")}</label>
         <TextAreaGroup resize="none">
           <TextArea
             size="md"
             surface="field"
             autoResize
-            maxRows={6}
-            value={optionsText}
-            onChange={(e) => setOptionsText(e.target.value)}
-            placeholder="One option per line"
+            maxRows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t("work_item_types.settings.properties.create_update.form.description.placeholder")}
           />
         </TextAreaGroup>
+      </div>
+
+      {!property && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption-md-medium text-secondary">
+            {t("work_item_types.settings.properties.dropdown.label")}
+          </label>
+          <select
+            className="h-9 w-full rounded-md border border-subtle bg-surface-1 px-3 text-body-sm-regular text-primary outline-none focus:border-accent-strong"
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value as TIssueCustomPropertyType)}
+          >
+            {PROPERTY_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(
+                  `work_item_types.settings.properties.property_type.${
+                    type === "MEMBER" ? "member_picker" : type.toLowerCase()
+                  }.label`
+                )}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
+
+      {propertyType === "DROPDOWN" && !property && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption-md-medium text-secondary">
+            {t("work_item_types.settings.properties.attributes.option.create_update.label")}
+          </label>
+          <TextAreaGroup resize="none">
+            <TextArea
+              size="md"
+              surface="field"
+              autoResize
+              maxRows={6}
+              value={optionsText}
+              onChange={(e) => setOptionsText(e.target.value)}
+              placeholder={t("work_item_types.settings.properties.attributes.option.create_update.form.placeholder")}
+            />
+          </TextAreaGroup>
+        </div>
+      )}
+
       {propertyType === "FORMULA" && (
-        <Input
-          size="md"
-          surface="field"
-          value={formula}
-          onChange={(e) => setFormula(e.target.value)}
-          placeholder={t("work_item_types.settings.properties.formula.placeholder")}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption-md-medium text-secondary">
+            {t("work_item_types.settings.properties.formula.field_label")}
+          </label>
+          <Input
+            size="md"
+            surface="field"
+            value={formula}
+            onChange={(e) => setFormula(e.target.value)}
+            placeholder={t("work_item_types.settings.properties.formula.placeholder")}
+          />
+        </div>
       )}
-      <label className="text-sm flex items-center gap-2">
-        <input type="checkbox" checked={isRequired} onChange={(e) => setIsRequired(e.target.checked)} />
-        {t("work_item_types.settings.properties.mandate_confirmation.label")}
-      </label>
-      <div className="flex justify-end gap-2">
-        <Button variant="secondary" size="sm" onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button variant="primary" size="sm" onClick={handleSubmit} disabled={submitting}>
-          {property ? "Update" : "Create"}
-        </Button>
+
+      <div className="flex items-center justify-between gap-4 rounded-md border border-subtle px-3 py-2.5">
+        <div className="text-body-sm-regular text-secondary">
+          {t("work_item_types.settings.properties.mandate_confirmation.label")}
+        </div>
+        <Switch size="sm" checked={isRequired} onCheckedChange={setIsRequired} />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-1">
+        <Button
+          variant="secondary"
+          size="sm"
+          stretch="auto"
+          onClick={onClose}
+          disabled={submitting}
+          label={t("common.cancel")}
+        />
+        <Button
+          variant="primary"
+          size="sm"
+          stretch="auto"
+          onClick={handleSubmit}
+          loading={submitting}
+          disabled={submitting || !name.trim()}
+          label={property ? t("common.update") : t("common.create")}
+        />
       </div>
     </div>
   );

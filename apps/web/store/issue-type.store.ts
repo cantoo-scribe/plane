@@ -132,7 +132,7 @@ export class IssueTypeStore implements IIssueTypeStore {
 
   getIssuePropertyValues = computedFn((issueId: string) => this.valueMap[issueId] ?? {});
 
-  async fetchProjectIssueTypes(workspaceSlug: string, projectId: string) {
+  fetchProjectIssueTypes = async (workspaceSlug: string, projectId: string) => {
     const types = await this.service.fetchProjectIssueTypes(workspaceSlug, projectId);
     runInAction(() => {
       types.forEach((type) => {
@@ -144,9 +144,9 @@ export class IssueTypeStore implements IIssueTypeStore {
       this.fetchedTypesMap[projectId] = true;
     });
     return types;
-  }
+  };
 
-  async createIssueType(workspaceSlug: string, projectId: string, data: Partial<TIssueType>) {
+  createIssueType = async (workspaceSlug: string, projectId: string, data: Partial<TIssueType>) => {
     const type = await this.service.createIssueType(workspaceSlug, projectId, data);
     runInAction(() => {
       this.typeMap[type.id] = {
@@ -155,9 +155,9 @@ export class IssueTypeStore implements IIssueTypeStore {
       };
     });
     return type;
-  }
+  };
 
-  async updateIssueType(workspaceSlug: string, projectId: string, typeId: string, data: Partial<TIssueType>) {
+  updateIssueType = async (workspaceSlug: string, projectId: string, typeId: string, data: Partial<TIssueType>) => {
     const type = await this.service.updateIssueType(workspaceSlug, projectId, typeId, data);
     runInAction(() => {
       this.typeMap[type.id] = {
@@ -167,9 +167,9 @@ export class IssueTypeStore implements IIssueTypeStore {
       };
     });
     return type;
-  }
+  };
 
-  async deleteIssueType(workspaceSlug: string, projectId: string, typeId: string) {
+  deleteIssueType = async (workspaceSlug: string, projectId: string, typeId: string) => {
     await this.service.deleteIssueType(workspaceSlug, projectId, typeId);
     runInAction(() => {
       delete this.typeMap[typeId];
@@ -177,9 +177,9 @@ export class IssueTypeStore implements IIssueTypeStore {
         if (this.propertyMap[pid].issue_type_id === typeId) delete this.propertyMap[pid];
       });
     });
-  }
+  };
 
-  async markAsDefault(workspaceSlug: string, projectId: string, typeId: string) {
+  markAsDefault = async (workspaceSlug: string, projectId: string, typeId: string) => {
     await this.service.markAsDefault(workspaceSlug, projectId, typeId);
     runInAction(() => {
       Object.values(this.typeMap).forEach((type) => {
@@ -188,9 +188,9 @@ export class IssueTypeStore implements IIssueTypeStore {
         }
       });
     });
-  }
+  };
 
-  async fetchProperties(workspaceSlug: string, projectId: string, typeId: string) {
+  fetchProperties = async (workspaceSlug: string, projectId: string, typeId: string) => {
     const properties = await this.service.fetchProperties(workspaceSlug, projectId, typeId);
     runInAction(() => {
       properties.forEach((prop) => {
@@ -199,49 +199,49 @@ export class IssueTypeStore implements IIssueTypeStore {
       this.fetchedPropertiesMap[typeId] = true;
     });
     return properties;
-  }
+  };
 
-  async createProperty(
+  createProperty = async (
     workspaceSlug: string,
     projectId: string,
     typeId: string,
     data: Partial<TIssueCustomProperty> & { options?: Partial<TIssueCustomPropertyOption>[] }
-  ) {
+  ) => {
     const prop = await this.service.createProperty(workspaceSlug, projectId, typeId, data);
     runInAction(() => {
       this.propertyMap[prop.id] = prop;
     });
     return prop;
-  }
+  };
 
-  async updateProperty(
+  updateProperty = async (
     workspaceSlug: string,
     projectId: string,
     typeId: string,
     propertyId: string,
     data: Partial<TIssueCustomProperty>
-  ) {
+  ) => {
     const prop = await this.service.updateProperty(workspaceSlug, projectId, typeId, propertyId, data);
     runInAction(() => {
       this.propertyMap[prop.id] = prop;
     });
     return prop;
-  }
+  };
 
-  async deleteProperty(workspaceSlug: string, projectId: string, typeId: string, propertyId: string) {
+  deleteProperty = async (workspaceSlug: string, projectId: string, typeId: string, propertyId: string) => {
     await this.service.deleteProperty(workspaceSlug, projectId, typeId, propertyId);
     runInAction(() => {
       delete this.propertyMap[propertyId];
     });
-  }
+  };
 
-  async createOption(
+  createOption = async (
     workspaceSlug: string,
     projectId: string,
     typeId: string,
     propertyId: string,
     data: Partial<TIssueCustomPropertyOption>
-  ) {
+  ) => {
     const option = await this.service.createOption(workspaceSlug, projectId, typeId, propertyId, data);
     runInAction(() => {
       const prop = this.propertyMap[propertyId];
@@ -253,9 +253,9 @@ export class IssueTypeStore implements IIssueTypeStore {
       }
     });
     return option;
-  }
+  };
 
-  async fetchIssuePropertyValues(workspaceSlug: string, projectId: string, issueId: string) {
+  fetchIssuePropertyValues = async (workspaceSlug: string, projectId: string, issueId: string) => {
     const values = await this.service.fetchIssuePropertyValues(workspaceSlug, projectId, issueId);
     runInAction(() => {
       this.valueMap[issueId] = {};
@@ -264,14 +264,14 @@ export class IssueTypeStore implements IIssueTypeStore {
       });
     });
     return values;
-  }
+  };
 
-  async upsertIssuePropertyValues(
+  upsertIssuePropertyValues = async (
     workspaceSlug: string,
     projectId: string,
     issueId: string,
     payloads: TIssueCustomPropertyValueWrite[]
-  ) {
+  ) => {
     const result = await this.service.upsertIssuePropertyValues(workspaceSlug, projectId, issueId, payloads);
     runInAction(() => {
       if (!this.valueMap[issueId]) this.valueMap[issueId] = {};
@@ -279,5 +279,5 @@ export class IssueTypeStore implements IIssueTypeStore {
         this.valueMap[issueId][v.property_id] = v;
       });
     });
-  }
+  };
 }

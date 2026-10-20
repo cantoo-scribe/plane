@@ -9,7 +9,9 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
+import { Switch } from "@makeplane/propel/components/switch";
 import { setToast } from "@plane/blocks/toast";
+import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-item";
 import { SettingsHeading } from "@/components/settings/heading";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useProject } from "@/hooks/store/use-project";
@@ -43,6 +45,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
   const [newTypeName, setNewTypeName] = useState("");
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
     if (workspaceSlug && projectId) {
@@ -64,12 +67,24 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
 
   const properties = getPropertiesForType(selectedTypeId);
   const editingProperty = editingPropertyId ? properties.find((p) => p.id === editingPropertyId) : undefined;
+  const selectedType = selectedTypeId ? types.find((type) => type.id === selectedTypeId) : undefined;
 
-  const handleEnableTypes = async () => {
-    if (!project) return;
-    await updateProject(workspaceSlug, projectId, {
-      is_issue_type_enabled: !project.is_issue_type_enabled,
-    });
+  const handleEnableTypes = async (checked: boolean) => {
+    if (!project || !isAdmin || isToggling) return;
+    setIsToggling(true);
+    try {
+      await updateProject(workspaceSlug, projectId, {
+        is_issue_type_enabled: checked,
+      });
+    } catch {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: t("common.something_went_wrong"),
+      });
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   const handleCreateType = async () => {
@@ -97,116 +112,153 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
     <div className="flex flex-col gap-6">
       <SettingsHeading title={t("work_item_types.label")} description={t("work_item_types.settings.description")} />
 
-      <div className="flex items-center justify-between rounded-md border border-subtle-1 p-4">
-        <div>
-          <div className="text-sm font-medium">Enable work item types</div>
-          <div className="text-xs text-tertiary">Turn on custom work item types and properties for this project.</div>
-        </div>
-        <Button variant="secondary" size="sm" onClick={handleEnableTypes} disabled={!isAdmin}>
-          {project?.is_issue_type_enabled ? "Disable" : "Enable"}
-        </Button>
-      </div>
+      <SettingsBoxedControlItem
+        title={t("work_item_types.empty_state.enable.title")}
+        description={t("work_item_types.empty_state.enable.description")}
+        control={
+          <Switch
+            size="sm"
+            checked={Boolean(project?.is_issue_type_enabled)}
+            onCheckedChange={handleEnableTypes}
+            disabled={!isAdmin || isToggling}
+          />
+        }
+      />
 
       {project?.is_issue_type_enabled && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-3 lg:col-span-1">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">{t("work_item_types.settings.types.title")}</div>
-              {isAdmin && (
-                <Button variant="secondary" size="sm" onClick={() => setShowTypeForm(true)}>
-                  {t("work_item_types.create.button")}
-                </Button>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="flex flex-col gap-4 lg:col-span-4">
+            <div className="flex items-center justify-between gap-3">
+              <SettingsHeading title={t("work_item_types.settings.types.title")} variant="h6" />
+              {isAdmin && !showTypeForm && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  stretch="auto"
+                  onClick={() => setShowTypeForm(true)}
+                  label={t("work_item_types.create.button")}
+                />
               )}
             </div>
+
             {showTypeForm && (
-              <div className="flex flex-col gap-2 rounded-md border border-subtle-1 p-3">
+              <div className="flex flex-col gap-3 rounded-lg border border-subtle bg-layer-2 p-4">
                 <Input
                   size="md"
                   surface="field"
                   value={newTypeName}
                   onChange={(e) => setNewTypeName(e.target.value)}
                   placeholder={t("work_item_types.create_update.form.name.placeholder")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleCreateType();
+                  }}
                 />
                 <div className="flex justify-end gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => setShowTypeForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={handleCreateType}>
-                    Create
-                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    stretch="auto"
+                    onClick={() => {
+                      setShowTypeForm(false);
+                      setNewTypeName("");
+                    }}
+                    label={t("common.cancel")}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    stretch="auto"
+                    onClick={handleCreateType}
+                    disabled={!newTypeName.trim()}
+                    label={t("common.create")}
+                  />
                 </div>
               </div>
             )}
+
             <div className="flex flex-col gap-1">
               {types.map((type) => (
                 <button
                   key={type.id}
                   type="button"
-                  className={`text-sm flex items-center justify-between rounded-md px-3 py-2 text-left ${
-                    selectedTypeId === type.id ? "bg-layer-2" : "hover:bg-layer-1"
+                  className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left text-body-sm-medium transition-colors ${
+                    selectedTypeId === type.id ? "bg-layer-2 text-primary" : "text-secondary hover:bg-layer-1"
                   }`}
-                  onClick={() => setSelectedTypeId(type.id)}
+                  onClick={() => {
+                    setSelectedTypeId(type.id);
+                    setShowPropertyForm(false);
+                    setEditingPropertyId(null);
+                  }}
                 >
-                  <span>
+                  <span className="truncate">
                     {type.name}
-                    {type.is_default ? " (default)" : ""}
+                    {type.is_default ? (
+                      <span className="ml-1.5 text-caption-md-regular text-tertiary">({t("common.default")})</span>
+                    ) : null}
                   </span>
-                  {isAdmin && (
-                    <span className="flex gap-1">
-                      {!type.is_default && (
-                        <button
-                          type="button"
-                          className="text-xs text-tertiary hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void markAsDefault(workspaceSlug, projectId, type.id);
-                          }}
-                        >
-                          Default
-                        </button>
-                      )}
-                      {!type.is_default && (
-                        <button
-                          type="button"
-                          className="text-xs hover:text-danger text-tertiary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void deleteIssueType(workspaceSlug, projectId, type.id).then(() => {
-                              if (selectedTypeId === type.id) setSelectedTypeId(null);
-                              return undefined;
-                            });
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
+                  {isAdmin && !type.is_default && (
+                    <span className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-caption-md-regular text-tertiary hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void markAsDefault(workspaceSlug, projectId, type.id);
+                        }}
+                      >
+                        {t("work_item_types.settings.set_as_default")}
+                      </button>
+                      <button
+                        type="button"
+                        className="text-caption-md-regular text-tertiary hover:text-danger-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deleteIssueType(workspaceSlug, projectId, type.id).then(() => {
+                            if (selectedTypeId === type.id) setSelectedTypeId(null);
+                            return undefined;
+                          });
+                        }}
+                      >
+                        {t("common.delete")}
+                      </button>
                     </span>
                   )}
                 </button>
               ))}
               {!types.length && (
-                <div className="text-sm text-tertiary">{t("work_item_types.settings.types.description")}</div>
+                <p className="px-1 text-body-sm-regular text-tertiary">
+                  {t("work_item_types.settings.types.description")}
+                </p>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium">{t("work_item_types.settings.properties.title")}</div>
-                <div className="text-xs text-tertiary">{t("work_item_types.settings.properties.description")}</div>
+          <div className="flex flex-col gap-4 lg:col-span-8">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <SettingsHeading
+                  title={
+                    selectedType
+                      ? `${selectedType.name} · ${t("work_item_types.settings.properties.title")}`
+                      : t("work_item_types.settings.properties.title")
+                  }
+                  variant="h6"
+                />
+                <p className="text-caption-md-regular text-tertiary">
+                  {t("work_item_types.settings.properties.description")}
+                </p>
               </div>
-              {isAdmin && selectedTypeId && (
+              {isAdmin && selectedTypeId && !showPropertyForm && !editingProperty && (
                 <Button
                   variant="secondary"
                   size="sm"
+                  stretch="auto"
                   onClick={() => {
                     setEditingPropertyId(null);
                     setShowPropertyForm(true);
                   }}
-                >
-                  {t("work_item_types.settings.properties.add_button")}
-                </Button>
+                  label={t("work_item_types.settings.properties.add_button")}
+                />
               )}
             </div>
 
@@ -227,45 +279,69 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
               {properties.map((prop) => (
                 <div
                   key={prop.id}
-                  className="flex items-center justify-between rounded-md border border-subtle-1 px-3 py-2"
+                  className="flex items-center justify-between gap-4 rounded-lg border border-subtle bg-layer-2 px-4 py-3"
                 >
-                  <div>
-                    <div className="text-sm font-medium">
+                  <div className="min-w-0">
+                    <div className="truncate text-body-sm-medium text-primary">
                       {prop.name}
                       {prop.is_required ? " *" : ""}
                     </div>
-                    <div className="text-xs text-tertiary">{prop.property_type}</div>
+                    <div className="text-caption-md-regular text-tertiary">
+                      {t(
+                        `work_item_types.settings.properties.property_type.${
+                          prop.property_type === "MEMBER" ? "member_picker" : prop.property_type.toLowerCase()
+                        }.label`
+                      )}
+                    </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex gap-2">
+                    <div className="flex shrink-0 items-center gap-3">
                       <button
                         type="button"
-                        className="text-xs text-tertiary hover:text-primary"
+                        className="text-caption-md-regular text-tertiary hover:text-primary"
                         onClick={() => {
-                          setEditingPropertyId(prop.id);
                           setShowPropertyForm(false);
+                          setEditingPropertyId(prop.id);
                         }}
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
                         type="button"
-                        className="text-xs hover:text-danger text-tertiary"
+                        className="text-caption-md-regular text-tertiary hover:text-danger-primary"
                         onClick={() => {
                           if (!selectedTypeId) return;
                           void deleteProperty(workspaceSlug, projectId, selectedTypeId, prop.id);
                         }}
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   )}
                 </div>
               ))}
-              {!properties.length && selectedTypeId && (
-                <div className="text-sm rounded-md border border-dashed border-subtle-1 p-6 text-center text-tertiary">
-                  <div className="font-medium">{t("work_item_types.settings.properties.empty_state.title")}</div>
-                  <div>{t("work_item_types.settings.properties.empty_state.description")}</div>
+              {!properties.length && selectedTypeId && !showPropertyForm && !editingProperty && (
+                <div className="rounded-lg border border-dashed border-subtle px-6 py-10 text-center">
+                  <div className="text-body-sm-medium text-primary">
+                    {t("work_item_types.settings.properties.empty_state.title")}
+                  </div>
+                  <div className="mt-1 text-caption-md-regular text-tertiary">
+                    {t("work_item_types.settings.properties.empty_state.description")}
+                  </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-center">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        stretch="auto"
+                        onClick={() => {
+                          setEditingPropertyId(null);
+                          setShowPropertyForm(true);
+                        }}
+                        label={t("work_item_types.settings.properties.add_button")}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
