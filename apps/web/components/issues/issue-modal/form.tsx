@@ -10,7 +10,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 // editor
 import { ETabIndices, DEFAULT_WORK_ITEM_FORM_VALUES } from "@plane/constants";
 import type { EditorRefApi } from "@plane/editor";
@@ -44,6 +44,7 @@ import {
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
 import { IssueModalCustomProperties } from "@/components/issues/issue-modal/components/custom-properties";
+import { IssueModalTypeSelect } from "@/components/issues/issue-modal/components/type-select";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -128,6 +129,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     handlePropertyValuesValidation,
     handleCreateUpdatePropertyValues,
     handleTemplateChange,
+    setIssuePropertyValues,
+    setIssuePropertyValueErrors,
   } = useIssueModal();
   const { isMobile } = usePlatformOS();
   const { moveIssue } = useWorkspaceDraftIssues();
@@ -373,6 +376,22 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                     control={control}
                     disabled={!!data?.id || !!data?.sourceIssueId || isProjectSelectionDisabled}
                     handleFormChange={handleFormChange}
+                  />
+                  <Controller
+                    control={control}
+                    name="type_id"
+                    render={({ field: { value, onChange } }) => (
+                      <IssueModalTypeSelect
+                        projectId={projectId}
+                        value={value}
+                        onChange={(typeId) => {
+                          onChange(typeId);
+                          setIssuePropertyValues({});
+                          setIssuePropertyValueErrors({});
+                          handleFormChange();
+                        }}
+                      />
+                    )}
                   />
                 </div>
               </div>
