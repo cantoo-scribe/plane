@@ -31,7 +31,9 @@ import { ProjectSelect } from "@/components/dropdowns/project/project-select";
 import { StateSelect } from "@/components/dropdowns/state/state-select";
 import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
+import { IssueModalTypeSelect } from "@/components/issues/issue-modal/components/type-select";
 // hooks
+import { useIssueModal } from "@/hooks/context/use-issue-modal";
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -70,6 +72,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const [parentIssueListModalOpen, setParentIssueListModalOpen] = useState(false);
   // store hooks
   const { t } = useTranslation();
+  const { setIssuePropertyValues, setIssuePropertyValueErrors } = useIssueModal();
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const { getProjectById } = useProject();
   const { getProjectDefaultStateId } = useProjectState();
@@ -88,6 +91,22 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <Controller
+        control={control}
+        name="type_id"
+        render={({ field: { value, onChange } }) => (
+          <IssueModalTypeSelect
+            projectId={projectId}
+            value={value}
+            onChange={(typeId) => {
+              onChange(typeId);
+              setIssuePropertyValues({});
+              setIssuePropertyValueErrors({});
+              handleFormChange();
+            }}
+          />
+        )}
+      />
       <Controller
         control={control}
         name="state_id"
