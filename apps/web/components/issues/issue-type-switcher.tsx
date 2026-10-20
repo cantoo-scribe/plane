@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
-import { setToast, TOAST_TYPE } from "@plane/blocks/toast";
+import { setToast } from "@plane/blocks/toast";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 import { useParams } from "next/navigation";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -49,13 +49,13 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
       await updateIssue(workspaceSlug.toString(), issue.project_id!, issueId, { type_id: typeId });
       setConfirmTypeId(null);
       setToast({
-        type: TOAST_TYPE.SUCCESS,
+        type: "success",
         title: "Success!",
         message: "Work item type updated.",
       });
     } catch {
       setToast({
-        type: TOAST_TYPE.ERROR,
+        type: "error",
         title: "Error!",
         message: "Failed to update work item type.",
       });

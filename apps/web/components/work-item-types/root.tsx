@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
-import { setToast, TOAST_TYPE } from "@plane/blocks/toast";
+import { setToast } from "@plane/blocks/toast";
 import { SettingsHeading } from "@/components/settings/heading";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useProject } from "@/hooks/store/use-project";
@@ -80,13 +80,13 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
       setNewTypeName("");
       setShowTypeForm(false);
       setToast({
-        type: TOAST_TYPE.SUCCESS,
+        type: "success",
         title: "Success!",
         message: t("work_item_types.create.toast.success.message"),
       });
     } catch {
       setToast({
-        type: TOAST_TYPE.ERROR,
+        type: "error",
         title: "Error!",
         message: t("work_item_types.create.toast.error.message.default"),
       });

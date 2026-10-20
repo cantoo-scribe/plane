@@ -11,7 +11,7 @@ import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
 import { TextArea } from "@makeplane/propel/components/textarea";
 import type { TIssueCustomProperty, TIssueCustomPropertyType } from "@plane/types";
-import { setToast, TOAST_TYPE } from "@plane/blocks/toast";
+import { setToast } from "@plane/blocks/toast";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 
 const PROPERTY_TYPES: TIssueCustomPropertyType[] = [
@@ -49,7 +49,7 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
   const handleSubmit = async () => {
     if (!name.trim()) {
       setToast({
-        type: TOAST_TYPE.ERROR,
+        type: "error",
         title: "Error!",
         message: t("work_item_types.settings.properties.create_update.errors.name.required"),
       });
@@ -86,7 +86,7 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
         });
       }
       setToast({
-        type: TOAST_TYPE.SUCCESS,
+        type: "success",
         title: "Success!",
         message: property
           ? t("work_item_types.settings.properties.toast.update.success.message", { name })
@@ -96,7 +96,7 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
       onClose();
     } catch {
       setToast({
-        type: TOAST_TYPE.ERROR,
+        type: "error",
         title: "Error!",
         message: property
           ? t("work_item_types.settings.properties.toast.update.error.message")
