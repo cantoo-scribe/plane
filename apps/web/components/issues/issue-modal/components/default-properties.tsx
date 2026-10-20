@@ -27,6 +27,7 @@ import { LabelSelect } from "@/components/dropdowns/label/label-select";
 import { MemberSelect } from "@/components/dropdowns/member/member-select";
 import { ModuleSelect } from "@/components/dropdowns/module/module-select";
 import { PrioritySelect } from "@/components/dropdowns/priority/priority-select";
+import { ProjectSelect } from "@/components/dropdowns/project/project-select";
 import { StateSelect } from "@/components/dropdowns/state/state-select";
 import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
@@ -321,6 +322,99 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           />
         )}
       />
+      {projectId && projectDetails?.is_okr && (
+        <>
+          <Controller
+            control={control}
+            name="linked_teamspace_id"
+            render={({ field: { value, onChange } }) => (
+              <ProjectSelect
+                projectList="all"
+                variant="pill-md"
+                value={value ?? null}
+                excludeProjectId={projectId}
+                placeholder={t("linked_teamspace")}
+                filterOption={(optionId) => !!getProjectById(optionId)?.is_teamspace}
+                onChange={(linkedId) => {
+                  onChange(linkedId);
+                  handleFormChange();
+                }}
+                tabIndex={getIndex("parent_id")}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="linked_project_id"
+            render={({ field: { value, onChange } }) => (
+              <ProjectSelect
+                projectList="all"
+                variant="pill-md"
+                value={value ?? null}
+                excludeProjectId={projectId}
+                placeholder={t("linked_project")}
+                filterOption={(optionId) => {
+                  const project = getProjectById(optionId);
+                  return !!project && !project.is_teamspace && !project.is_okr;
+                }}
+                onChange={(linkedId) => {
+                  onChange(linkedId);
+                  handleFormChange();
+                }}
+                tabIndex={getIndex("parent_id")}
+              />
+            )}
+          />
+        </>
+      )}
+      {projectId && !projectDetails?.is_okr && (
+        <>
+          <Controller
+            control={control}
+            name={projectDetails?.is_teamspace ? "linked_project_id" : "linked_teamspace_id"}
+            render={({ field: { value, onChange } }) => (
+              <ProjectSelect
+                projectList="all"
+                variant="pill-md"
+                value={value ?? null}
+                excludeProjectId={projectId}
+                placeholder={projectDetails?.is_teamspace ? t("linked_project") : t("linked_teamspace")}
+                filterOption={(optionId) => {
+                  const project = getProjectById(optionId);
+                  if (!project) return false;
+                  return projectDetails?.is_teamspace
+                    ? !project.is_teamspace && !project.is_okr
+                    : !!project.is_teamspace;
+                }}
+                onChange={(linkedId) => {
+                  onChange(linkedId);
+                  handleFormChange();
+                }}
+                tabIndex={getIndex("parent_id")}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="linked_okr_id"
+            render={({ field: { value, onChange } }) => (
+              <ProjectSelect
+                projectList="all"
+                variant="pill-md"
+                value={value ?? null}
+                excludeProjectId={projectId}
+                placeholder={t("linked_okr")}
+                filterOption={(optionId) => !!getProjectById(optionId)?.is_okr}
+                onChange={(linkedId) => {
+                  onChange(linkedId);
+                  handleFormChange();
+                }}
+                tabIndex={getIndex("parent_id")}
+              />
+            )}
+          />
+        </>
+      )}
     </div>
   );
 });

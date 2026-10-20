@@ -44,6 +44,7 @@ import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local components
 import { IssueListTimerButton } from "@/components/time-tracking/issue-list-timer-button";
+import { IssueListCustomProperties } from "./custom-properties";
 import { IssuePropertyLabels } from "./labels";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
 
@@ -474,6 +475,10 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           maxRender={3}
         />
       </WithDisplayPropertiesHOC>
+
+      {issue.project_id && issue.id ? (
+        <IssueListCustomProperties projectId={issue.project_id} issueId={issue.id} issueTypeId={issue.type_id} />
+      ) : null}
 
       {/* time tracking timer — always shown when project feature is on */}
       {!isEpic && issue.project_id && issue.id && workspaceSlug ? (

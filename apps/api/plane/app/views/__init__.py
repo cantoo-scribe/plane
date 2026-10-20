@@ -247,3 +247,10 @@ from .notification.base import MarkAllReadNotificationViewSet
 from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
 
 from .timezone.base import TimezoneEndpoint
+
+from .issue_type.base import IssueTypeViewSet
+from .issue_custom_property.base import (
+    IssueCustomPropertyOptionViewSet,
+    IssueCustomPropertyValueEndpoint,
+    IssueCustomPropertyViewSet,
+)

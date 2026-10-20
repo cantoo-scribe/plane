@@ -140,3 +140,11 @@ from .draft import (
     DraftIssueSerializer,
     DraftIssueDetailSerializer,
 )
+
+from .issue_type import IssueTypeSerializer, ProjectIssueTypeSerializer
+from .issue_custom_property import (
+    IssueCustomPropertyOptionSerializer,
+    IssueCustomPropertySerializer,
+    IssueCustomPropertyValueSerializer,
+    IssueCustomPropertyValueWriteSerializer,
+)

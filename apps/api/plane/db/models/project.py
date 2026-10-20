@@ -97,6 +97,10 @@ class Project(BaseModel):
     intake_view = models.BooleanField(default=False)
     is_time_tracking_enabled = models.BooleanField(default=False)
     is_issue_type_enabled = models.BooleanField(default=False)
+    # Teamspace / pôle: same Project model, shown separately in the sidebar
+    is_teamspace = models.BooleanField(default=False)
+    # OKR container: same Project model, third sidebar section (mutually exclusive with is_teamspace)
+    is_okr = models.BooleanField(default=False)
     guest_view_all_features = models.BooleanField(default=False)
     cover_image = models.TextField(blank=True, null=True)
     cover_image_asset = models.ForeignKey(

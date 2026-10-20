@@ -190,6 +190,8 @@ class ProjectViewSet(BaseViewSet):
             "guest_view_all_features",
             "project_lead",
             "network",
+            "is_teamspace",
+            "is_okr",
             "created_at",
             "updated_at",
             "created_by",
@@ -237,11 +239,48 @@ class ProjectViewSet(BaseViewSet):
                     {"error": "You do not have permission"},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            else:
+            # Public projects: silently join workspace MEMBER/ADMIN so they can open
+            # without a Join modal (permissions still require ProjectMember).
+            workspace_member = WorkspaceMember.objects.filter(
+                member=request.user,
+                workspace__slug=slug,
+                is_active=True,
+                role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
+            ).first()
+            if workspace_member is None or project.network != ProjectNetwork.PUBLIC.value:
                 return Response(
                     {"error": "You are not a member of this project"},
                     status=status.HTTP_409_CONFLICT,
                 )
+            ProjectMember.objects.filter(
+                project_id=project.id,
+                member=request.user,
+            ).update(is_active=True)
+            ProjectMember.objects.bulk_create(
+                [
+                    ProjectMember(
+                        project_id=project.id,
+                        member=request.user,
+                        role=ROLE.MEMBER.value,
+                        workspace_id=project.workspace_id,
+                        created_by=request.user,
+                    )
+                ],
+                ignore_conflicts=True,
+            )
+            ProjectUserProperty.objects.bulk_create(
+                [
+                    ProjectUserProperty(
+                        project_id=project.id,
+                        user=request.user,
+                        workspace_id=project.workspace_id,
+                        created_by=request.user,
+                    )
+                ],
+                ignore_conflicts=True,
+            )
+            # Refresh annotated queryset so member_role is populated
+            project = self.get_queryset().filter(archived_at__isnull=True).filter(pk=pk).first()
 
         recent_visited_task.delay(
             slug=slug,

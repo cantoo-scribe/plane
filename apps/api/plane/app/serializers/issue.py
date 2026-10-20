@@ -41,12 +41,15 @@ from plane.db.models import (
     IssueVersion,
     IssueDescriptionVersion,
     ProjectMember,
+    Project,
     EstimatePoint,
+    IssueType,
 )
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
 )
+from plane.utils.teamspace_visibility import validate_issue_cross_links
 
 
 class IssueFlatSerializer(BaseSerializer):
@@ -87,6 +90,24 @@ class IssueCreateSerializer(BaseSerializer):
     parent_id = serializers.PrimaryKeyRelatedField(
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
     )
+    linked_project_id = serializers.PrimaryKeyRelatedField(
+        source="linked_project",
+        queryset=Project.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    linked_teamspace_id = serializers.PrimaryKeyRelatedField(
+        source="linked_teamspace",
+        queryset=Project.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    linked_okr_id = serializers.PrimaryKeyRelatedField(
+        source="linked_okr",
+        queryset=Project.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     label_ids = serializers.ListField(
         child=serializers.PrimaryKeyRelatedField(queryset=Label.objects.all()),
         write_only=True,
@@ -99,10 +120,13 @@ class IssueCreateSerializer(BaseSerializer):
     )
     project_id = serializers.UUIDField(source="project.id", read_only=True)
     workspace_id = serializers.UUIDField(source="workspace.id", read_only=True)
+    type_id = serializers.PrimaryKeyRelatedField(
+        source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
+    )
 
     class Meta:
         model = Issue
-        fields = "__all__"
+        exclude = ["linked_project", "linked_teamspace", "linked_okr"]
         read_only_fields = [
             "workspace",
             "project",
@@ -119,6 +143,9 @@ class IssueCreateSerializer(BaseSerializer):
         data["assignee_ids"] = assignee_ids if assignee_ids else []
         label_ids = self.initial_data.get("label_ids")
         data["label_ids"] = label_ids if label_ids else []
+        data["linked_project_id"] = instance.linked_project_id
+        data["linked_teamspace_id"] = instance.linked_teamspace_id
+        data["linked_okr_id"] = instance.linked_okr_id
         return data
 
     def validate(self, attrs):
@@ -194,6 +221,27 @@ class IssueCreateSerializer(BaseSerializer):
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
+        if any(key in attrs for key in ("linked_project", "linked_teamspace", "linked_okr")):
+            home_project = Project.objects.filter(pk=self.context.get("project_id")).first()
+            if home_project is None:
+                raise serializers.ValidationError("Project is not valid")
+            instance = getattr(self, "instance", None)
+            try:
+                validate_issue_cross_links(
+                    home_project,
+                    linked_project=attrs["linked_project"]
+                    if "linked_project" in attrs
+                    else (instance.linked_project if instance else None),
+                    linked_teamspace=attrs["linked_teamspace"]
+                    if "linked_teamspace" in attrs
+                    else (instance.linked_teamspace if instance else None),
+                    linked_okr=attrs["linked_okr"]
+                    if "linked_okr" in attrs
+                    else (instance.linked_okr if instance else None),
+                )
+            except ValueError as exc:
+                raise serializers.ValidationError({"linked_project_id": str(exc)}) from exc
+
         return attrs
 
     def create(self, validated_data):
@@ -203,6 +251,20 @@ class IssueCreateSerializer(BaseSerializer):
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
+
+        # Assign default work item type when the project has types enabled
+        issue_type = validated_data.pop("type", None)
+        if issue_type is None:
+            issue_type = (
+                IssueType.objects.filter(
+                    project_issue_types__project_id=project_id,
+                    project_issue_types__is_default=True,
+                    is_active=True,
+                )
+                .first()
+            )
+        if issue_type is not None:
+            validated_data["type"] = issue_type
 
         # Create Issue
         issue = Issue.objects.create(**validated_data, project_id=project_id)
@@ -796,6 +858,9 @@ class IssueSerializer(DynamicBaseSerializer):
             "sequence_id",
             "project_id",
             "parent_id",
+            "linked_project_id",
+            "linked_teamspace_id",
+            "linked_okr_id",
             "cycle_id",
             "module_ids",
             "label_ids",
@@ -809,6 +874,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
+            "type_id",
         ]
         read_only_fields = fields
 
@@ -853,6 +919,9 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sequence_id": instance.sequence_id,
             "project_id": instance.project_id,
             "parent_id": instance.parent_id,
+            "linked_project_id": instance.linked_project_id,
+            "linked_teamspace_id": instance.linked_teamspace_id,
+            "linked_okr_id": instance.linked_okr_id,
             "created_at": instance.created_at,
             "updated_at": instance.updated_at,
             "created_by": instance.created_by_id,

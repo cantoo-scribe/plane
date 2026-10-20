@@ -6,4 +6,5 @@
 
 export * from "./date";
 export * from "./member-picker";
+export * from "./custom-property";
 export * from "./shared";

@@ -15,6 +15,7 @@ import {
   IntakeOutline,
   ModuleOutline,
   PagesOutline,
+  PropertiesOutline,
   TimeTrackingOutline,
   ViewsOutline,
 } from "@makeplane/propel/icons";
@@ -86,6 +87,15 @@ const PROJECT_FEATURES_LIST = {
     title: "Time tracking",
     description: "Log time spent on work items and projects.",
     icon: <TimeTrackingOutline className="h-5 w-5 flex-shrink-0 text-tertiary" />,
+    isPro: false,
+    isEnabled: true,
+  },
+  work_item_types: {
+    key: "work_item_types",
+    property: "is_issue_type_enabled",
+    title: "Work item types",
+    description: "Create custom work item types with your own properties.",
+    icon: <PropertiesOutline className="h-5 w-5 flex-shrink-0 text-tertiary" />,
     isPro: false,
     isEnabled: true,
   },

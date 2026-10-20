@@ -60,6 +60,9 @@ export type TBaseIssue = {
 
   project_id: string | null;
   parent_id: string | null;
+  linked_project_id?: string | null;
+  linked_teamspace_id?: string | null;
+  linked_okr_id?: string | null;
   cycle_id: string | null;
   module_ids: string[] | null;
   type_id: string | null;

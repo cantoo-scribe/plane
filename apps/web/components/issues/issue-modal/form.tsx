@@ -43,6 +43,7 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
+import { IssueModalCustomProperties } from "@/components/issues/issue-modal/components/custom-properties";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -425,6 +426,11 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                 isDraft={isDraft}
                 handleFormChange={handleFormChange}
                 setSelectedParentIssue={setSelectedParentIssue}
+              />
+              <IssueModalCustomProperties
+                workspaceSlug={workspaceSlug?.toString()}
+                projectId={projectId}
+                watch={watch}
               />
             </div>
           </DialogMain>

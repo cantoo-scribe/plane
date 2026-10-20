@@ -37,7 +37,11 @@ import { SidebarProjectsListItem } from "./projects-list-item";
 export const SidebarProjectsList = observer(function SidebarProjectsList() {
   // states
   const [isAllProjectsListOpen, setIsAllProjectsListOpen] = useState(true);
+  const [isTeamspacesListOpen, setIsTeamspacesListOpen] = useState(true);
+  const [isOkrsListOpen, setIsOkrsListOpen] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [createAsTeamspace, setCreateAsTeamspace] = useState(false);
+  const [createAsOkr, setCreateAsOkr] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false); // scroll animation state
   // refs
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +52,17 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
   const { preferences: projectPreferences } = useProjectNavigationPreferences();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
 
-  const { loader, getPartialProjectById, joinedProjectIds: joinedProjects, updateProjectView } = useProject();
+  const {
+    loader,
+    getPartialProjectById,
+    joinedRegularProjectIds: joinedProjects,
+    visibleRegularProjectIds: visibleProjects,
+    joinedTeamspaceIds: joinedTeamspaces,
+    visibleTeamspaceIds: visibleTeamspaces,
+    joinedOkrIds: joinedOkrs,
+    visibleOkrIds: visibleOkrs,
+    updateProjectView,
+  } = useProject();
   // router params
   const { workspaceSlug } = useParams();
   const pathname = usePathname();
@@ -59,41 +73,43 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
     EUserPermissionsLevel.WORKSPACE
   );
 
-  // Compute limited projects for main sidebar
+  // Compute limited projects for main sidebar (public projects appear without join)
   const displayedProjects = projectPreferences.showLimitedProjects
-    ? joinedProjects.slice(0, projectPreferences.limitedProjectsCount)
-    : joinedProjects;
+    ? visibleProjects.slice(0, projectPreferences.limitedProjectsCount)
+    : visibleProjects;
 
   // Check if there are more projects to show
   const hasMoreProjects =
-    projectPreferences.showLimitedProjects && joinedProjects.length > projectPreferences.limitedProjectsCount;
+    projectPreferences.showLimitedProjects && visibleProjects.length > projectPreferences.limitedProjectsCount;
 
   const handleCopyText = (projectId: string) => {
-    copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
+    void copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
       setToast({
         type: "success",
         title: t("link_copied"),
         message: t("project_link_copied_to_clipboard"),
       });
+      return undefined;
     });
   };
 
   const handleOnProjectDrop = (
     sourceId: string | undefined,
     destinationId: string | undefined,
-    shouldDropAtEnd: boolean
+    shouldDropAtEnd: boolean,
+    listIds: string[]
   ) => {
     if (!sourceId || !destinationId || !workspaceSlug) return;
     if (sourceId === destinationId) return;
 
     const joinedProjectsList: TProject[] = [];
-    joinedProjects.map((projectId) => {
+    listIds.map((projectId) => {
       const projectDetails = getPartialProjectById(projectId);
       if (projectDetails) joinedProjectsList.push(projectDetails);
     });
 
-    const sourceIndex = joinedProjects.indexOf(sourceId);
-    const destinationIndex = shouldDropAtEnd ? joinedProjects.length : joinedProjects.indexOf(destinationId);
+    const sourceIndex = listIds.indexOf(sourceId);
+    const destinationIndex = shouldDropAtEnd ? listIds.length : listIds.indexOf(destinationId);
 
     if (joinedProjectsList.length <= 0) return;
 
@@ -147,20 +163,60 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
     setIsAllProjectsListOpen(isOpen);
     localStorage.setItem("isAllProjectsListOpen", isOpen.toString());
   };
+
+  const toggleTeamspacesDisclosure = (isOpen: boolean) => {
+    setIsTeamspacesListOpen(isOpen);
+    localStorage.setItem("isTeamspacesListOpen", isOpen.toString());
+  };
+
+  const toggleOkrsDisclosure = (isOpen: boolean) => {
+    setIsOkrsListOpen(isOpen);
+    localStorage.setItem("isOkrsListOpen", isOpen.toString());
+  };
+
   useEffect(() => {
     if (pathname.includes("projects")) {
       setIsAllProjectsListOpen(true);
       localStorage.setItem("isAllProjectsListOpen", "true");
     }
   }, [pathname]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("isTeamspacesListOpen");
+    if (stored !== null) setIsTeamspacesListOpen(stored === "true");
+    const okrStored = localStorage.getItem("isOkrsListOpen");
+    if (okrStored !== null) setIsOkrsListOpen(okrStored === "true");
+  }, []);
+
+  const renderProjectItems = (projectIds: string[], listIds: string[]) =>
+    projectIds.map((projectId, index) => (
+      <SidebarProjectsListItem
+        key={projectId}
+        projectId={projectId}
+        handleCopyText={() => handleCopyText(projectId)}
+        projectListType={"JOINED"}
+        disableDrag={false}
+        disableDrop={false}
+        isLastChild={index === projectIds.length - 1}
+        handleOnProjectDrop={(sourceId, destinationId, shouldDropAtEnd) =>
+          handleOnProjectDrop(sourceId, destinationId, shouldDropAtEnd, listIds)
+        }
+      />
+    ));
+
   return (
     <>
       {workspaceSlug && (
         <CreateProjectModal
           isOpen={isProjectModalOpen}
-          onClose={() => setIsProjectModalOpen(false)}
+          onClose={() => {
+            setIsProjectModalOpen(false);
+            setCreateAsTeamspace(false);
+            setCreateAsOkr(false);
+          }}
           setToFavorite={false}
           workspaceSlug={workspaceSlug.toString()}
+          data={createAsTeamspace ? { is_teamspace: true } : createAsOkr ? { is_okr: true } : undefined}
         />
       )}
       <div
@@ -170,6 +226,90 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
         })}
       >
         <>
+          {(visibleTeamspaces.length > 0 || isAuthorizedUser) && (
+            <Collapsible
+              placement="sidebar"
+              render={<div className="group/teamspaces-section" />}
+              open={isTeamspacesListOpen}
+              onOpenChange={toggleTeamspacesDisclosure}
+              trigger={
+                <span className="text-13 font-semibold whitespace-nowrap text-placeholder">{t("teamspaces")}</span>
+              }
+              trailing={
+                isAuthorizedUser ? (
+                  <span className="hidden text-placeholder group-focus-within/teamspaces-section:inline-flex group-hover/teamspaces-section:inline-flex">
+                    <Tooltip label={t("create_teamspace")}>
+                      <IconButton
+                        variant="ghost"
+                        size="xs"
+                        icon={<Icon icon={AddOutline} />}
+                        onClick={() => {
+                          setCreateAsOkr(false);
+                          setCreateAsTeamspace(true);
+                          setIsProjectModalOpen(true);
+                        }}
+                        aria-label={t("create_teamspace")}
+                      />
+                    </Tooltip>
+                  </span>
+                ) : null
+              }
+            >
+              <div className="flex flex-col gap-0.5">
+                {loader === "init-loader" && (
+                  <Loader className="w-full space-y-1.5">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      // oxlint-disable-next-line react/no-array-index-key
+                      <Loader.Item key={index} height="28px" />
+                    ))}
+                  </Loader>
+                )}
+                {renderProjectItems(visibleTeamspaces, joinedTeamspaces)}
+              </div>
+            </Collapsible>
+          )}
+
+          {(visibleOkrs.length > 0 || isAuthorizedUser) && (
+            <Collapsible
+              placement="sidebar"
+              render={<div className="group/okrs-section" />}
+              open={isOkrsListOpen}
+              onOpenChange={toggleOkrsDisclosure}
+              trigger={<span className="text-13 font-semibold whitespace-nowrap text-placeholder">{t("okrs")}</span>}
+              trailing={
+                isAuthorizedUser ? (
+                  <span className="hidden text-placeholder group-focus-within/okrs-section:inline-flex group-hover/okrs-section:inline-flex">
+                    <Tooltip label={t("create_okr")}>
+                      <IconButton
+                        variant="ghost"
+                        size="xs"
+                        icon={<Icon icon={AddOutline} />}
+                        onClick={() => {
+                          setCreateAsTeamspace(false);
+                          setCreateAsOkr(true);
+                          setIsProjectModalOpen(true);
+                        }}
+                        aria-label={t("create_okr")}
+                      />
+                    </Tooltip>
+                  </span>
+                ) : null
+              }
+            >
+              <div className="flex flex-col gap-0.5">
+                {loader === "init-loader" && (
+                  <Loader className="w-full space-y-1.5">
+                    {Array.from({ length: 2 }).map((_, index) => (
+                      // oxlint-disable-next-line react/no-array-index-key
+                      <Loader.Item key={index} height="28px" />
+                    ))}
+                  </Loader>
+                )}
+                {renderProjectItems(visibleOkrs, joinedOkrs)}
+              </div>
+            </Collapsible>
+          )}
+
           <Collapsible
             placement="sidebar"
             // the group marker lives on the root: CollapsibleHeader takes no className
@@ -186,6 +326,8 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
                       size="xs"
                       icon={<Icon icon={AddOutline} />}
                       onClick={() => {
+                        setCreateAsTeamspace(false);
+                        setCreateAsOkr(false);
                         setIsProjectModalOpen(true);
                       }}
                       aria-label={t("aria_labels.projects_sidebar.create_new_project")}
@@ -204,18 +346,7 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
                   ))}
                 </Loader>
               )}
-              {displayedProjects.map((projectId, index) => (
-                <SidebarProjectsListItem
-                  key={projectId}
-                  projectId={projectId}
-                  handleCopyText={() => handleCopyText(projectId)}
-                  projectListType={"JOINED"}
-                  disableDrag={false}
-                  disableDrop={false}
-                  isLastChild={index === displayedProjects.length - 1}
-                  handleOnProjectDrop={handleOnProjectDrop}
-                />
-              ))}
+              {renderProjectItems(displayedProjects, joinedProjects)}
               {hasMoreProjects && (
                 <SidebarNavItem>
                   <button
@@ -238,17 +369,20 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
           </Collapsible>
         </>
 
-        {isAuthorizedUser && joinedProjects?.length === 0 && (
-          <button
-            type="button"
-            className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-13 leading-5 font-medium text-secondary hover:bg-surface-2"
-            onClick={() => {
-              toggleCreateProjectModal(true);
-            }}
-          >
-            {t("add_project")}
-          </button>
-        )}
+        {isAuthorizedUser &&
+          visibleProjects.length === 0 &&
+          visibleTeamspaces.length === 0 &&
+          visibleOkrs.length === 0 && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-13 leading-5 font-medium text-secondary hover:bg-surface-2"
+              onClick={() => {
+                toggleCreateProjectModal(true);
+              }}
+            >
+              {t("add_project")}
+            </button>
+          )}
       </div>
     </>
   );

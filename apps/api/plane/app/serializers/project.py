@@ -85,6 +85,14 @@ class ProjectSerializer(BaseSerializer):
             if not is_valid:
                 raise serializers.ValidationError({"error": "html content is not valid"})
 
+        is_teamspace = data.get(
+            "is_teamspace",
+            self.instance.is_teamspace if self.instance else False,
+        )
+        is_okr = data.get("is_okr", self.instance.is_okr if self.instance else False)
+        if is_teamspace and is_okr:
+            raise serializers.ValidationError("A project cannot be both a teamspace and an OKR")
+
         return data
 
     def create(self, validated_data):
@@ -108,6 +116,8 @@ class ProjectLiteSerializer(BaseSerializer):
             "cover_image_url",
             "logo_props",
             "description",
+            "is_teamspace",
+            "is_okr",
         ]
         read_only_fields = fields
 

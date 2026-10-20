@@ -22,11 +22,13 @@ from plane.db.models import (
     IssueLink,
     IssueRelation,
     Label,
+    Project,
     ProjectMember,
     State,
     User,
     EstimatePoint,
 )
+from plane.utils.teamspace_visibility import validate_issue_cross_links
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -159,6 +161,27 @@ class IssueSerializer(BaseSerializer):
             ).exists()
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
+
+        if any(key in data for key in ("linked_project", "linked_teamspace", "linked_okr")):
+            home_project = Project.objects.filter(pk=self.context.get("project_id")).first()
+            if home_project is None:
+                raise serializers.ValidationError("Project is not valid")
+            instance = getattr(self, "instance", None)
+            try:
+                validate_issue_cross_links(
+                    home_project,
+                    linked_project=data["linked_project"]
+                    if "linked_project" in data
+                    else (instance.linked_project if instance else None),
+                    linked_teamspace=data["linked_teamspace"]
+                    if "linked_teamspace" in data
+                    else (instance.linked_teamspace if instance else None),
+                    linked_okr=data["linked_okr"]
+                    if "linked_okr" in data
+                    else (instance.linked_okr if instance else None),
+                )
+            except ValueError as exc:
+                raise serializers.ValidationError({"linked_project": str(exc)}) from exc
 
         return data
 

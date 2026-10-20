@@ -85,6 +85,7 @@ from plane.utils.order_queryset import (
     ISSUE_ORDER_BY_ALLOWLIST,
     sanitize_order_by,
 )
+from plane.utils.teamspace_visibility import issues_visible_in_project
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from .base import BaseAPIView
 from plane.utils.host import base_host
@@ -269,15 +270,18 @@ class IssueListCreateAPIEndpoint(BaseAPIView):
     use_read_replica = True
 
     def get_queryset(self):
+        project = Project.objects.get(
+            pk=self.kwargs.get("project_id"),
+            workspace__slug=self.kwargs.get("slug"),
+        )
         return (
-            Issue.issue_objects.annotate(
+            issues_visible_in_project(self.kwargs.get("slug"), project)
+            .annotate(
                 sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
-            .filter(project_id=self.kwargs.get("project_id"))
-            .filter(workspace__slug=self.kwargs.get("slug"))
             .select_related("project")
             .select_related("workspace")
             .select_related("state")
@@ -384,7 +388,8 @@ class IssueListCreateAPIEndpoint(BaseAPIView):
             )
         )
 
-        total_issue_queryset = Issue.issue_objects.filter(project_id=project_id, workspace__slug=slug)
+        project = Project.objects.get(pk=project_id, workspace__slug=slug)
+        total_issue_queryset = issues_visible_in_project(slug, project)
 
         # Priority Ordering
         if order_by_param == "priority" or order_by_param == "-priority":

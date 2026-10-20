@@ -34,6 +34,23 @@ export interface IProjectStore {
   archivedProjectIds: string[] | undefined;
   totalProjectIds: string[] | undefined;
   joinedProjectIds: string[];
+  /**
+   * Visible project IDs for the sidebar: joined membership OR public (network === 2).
+   * Drag-sort still uses joined* lists (membership required for sort_order).
+   */
+  visibleProjectIds: string[];
+  /** Joined non-teamspace / non-OKR projects (sidebar "Projects" section). */
+  joinedRegularProjectIds: string[];
+  /** Visible regular projects (joined or public). */
+  visibleRegularProjectIds: string[];
+  /** Joined teamspace / pôle projects (sidebar "Poles" section). */
+  joinedTeamspaceIds: string[];
+  /** Visible teamspaces (joined or public). */
+  visibleTeamspaceIds: string[];
+  /** Joined OKR projects (sidebar "OKR" section). */
+  joinedOkrIds: string[];
+  /** Visible OKRs (joined or public). */
+  visibleOkrIds: string[];
   favoriteProjectIds: string[];
   currentProjectDetails: TProject | undefined;
   currentProjectNextSequenceId: number | undefined;
@@ -113,6 +130,13 @@ export class ProjectStore implements IProjectStore {
       totalProjectIds: computed,
       currentProjectDetails: computed,
       joinedProjectIds: computed,
+      visibleProjectIds: computed,
+      joinedRegularProjectIds: computed,
+      visibleRegularProjectIds: computed,
+      joinedTeamspaceIds: computed,
+      visibleTeamspaceIds: computed,
+      joinedOkrIds: computed,
+      visibleOkrIds: computed,
       favoriteProjectIds: computed,
       currentProjectNextSequenceId: computed,
       // helper actions
@@ -247,6 +271,51 @@ export class ProjectStore implements IProjectStore {
       .filter((project) => project.workspace === currentWorkspace.id && !!project.member_role && !project.archived_at)
       .map((project) => project.id);
     return projectIds;
+  }
+
+  get visibleProjectIds() {
+    const currentWorkspace = this.rootStore.workspaceRoot.currentWorkspace;
+    if (!currentWorkspace) return [];
+
+    let projects = Object.values(this.projectMap ?? {});
+    projects = sortBy(projects, "sort_order");
+
+    return projects
+      .filter(
+        (project) =>
+          project.workspace === currentWorkspace.id &&
+          !project.archived_at &&
+          (!!project.member_role || project.network === 2)
+      )
+      .map((project) => project.id);
+  }
+
+  get joinedRegularProjectIds() {
+    return this.joinedProjectIds.filter(
+      (projectId) => !this.projectMap[projectId]?.is_teamspace && !this.projectMap[projectId]?.is_okr
+    );
+  }
+
+  get visibleRegularProjectIds() {
+    return this.visibleProjectIds.filter(
+      (projectId) => !this.projectMap[projectId]?.is_teamspace && !this.projectMap[projectId]?.is_okr
+    );
+  }
+
+  get joinedTeamspaceIds() {
+    return this.joinedProjectIds.filter((projectId) => !!this.projectMap[projectId]?.is_teamspace);
+  }
+
+  get visibleTeamspaceIds() {
+    return this.visibleProjectIds.filter((projectId) => !!this.projectMap[projectId]?.is_teamspace);
+  }
+
+  get joinedOkrIds() {
+    return this.joinedProjectIds.filter((projectId) => !!this.projectMap[projectId]?.is_okr);
+  }
+
+  get visibleOkrIds() {
+    return this.visibleProjectIds.filter((projectId) => !!this.projectMap[projectId]?.is_okr);
   }
 
   /**
@@ -607,6 +676,7 @@ export class ProjectStore implements IProjectStore {
           set(this.projectMap, [projectId, "archived_at"], response.archived_at);
           this.rootStore.favorite.removeFavoriteFromStore(projectId);
         });
+        return response;
       })
       .catch((error) => {
         console.log("Failed to archive project from project store");
@@ -627,6 +697,7 @@ export class ProjectStore implements IProjectStore {
         runInAction(() => {
           set(this.projectMap, [projectId, "archived_at"], null);
         });
+        return undefined;
       })
       .catch((error) => {
         console.log("Failed to restore project from project store");

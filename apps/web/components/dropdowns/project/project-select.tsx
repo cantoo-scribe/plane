@@ -88,12 +88,13 @@ export const ProjectSelect = observer(function ProjectSelect(props: ProjectSelec
     tabIndex,
   } = props;
   const { t } = useTranslation();
-  const { joinedProjectIds, workspaceProjectIds, getProjectById } = useProject();
+  const { joinedRegularProjectIds, workspaceProjectIds, getProjectById } = useProject();
 
   // The store getters are read in render (above) so MobX re-renders this observer when the list hydrates.
+  // "joined" excludes teamspaces so project pickers stay project-only; use projectList="all" + filterOption for poles.
   const projectIds = useMemo(
-    () => (projectList === "joined" ? joinedProjectIds : (workspaceProjectIds ?? [])),
-    [projectList, joinedProjectIds, workspaceProjectIds]
+    () => (projectList === "joined" ? joinedRegularProjectIds : (workspaceProjectIds ?? [])),
+    [projectList, joinedRegularProjectIds, workspaceProjectIds]
   );
 
   const toOption = useCallback(

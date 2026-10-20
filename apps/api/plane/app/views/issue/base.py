@@ -61,7 +61,7 @@ from plane.db.models import (
     ProjectMember,
     UserRecentVisit,
 )
-from plane.utils.filters import ComplexFilterBackend, IssueFilterSet
+from plane.utils.filters import IssueFilterBackend, IssueFilterSet
 from plane.utils.global_paginator import paginate
 from plane.utils.grouper import (
     issue_group_values,
@@ -73,12 +73,13 @@ from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
 from plane.utils.timezone_converter import user_timezone_converter
+from plane.utils.teamspace_visibility import issues_visible_in_project
 
 from .. import BaseAPIView, BaseViewSet
 
 
 class IssueListEndpoint(BaseAPIView):
-    filter_backends = (ComplexFilterBackend,)
+    filter_backends = (IssueFilterBackend,)
     filterset_class = IssueFilterSet
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
@@ -199,6 +200,7 @@ class IssueListEndpoint(BaseAPIView):
                 "is_draft",
                 "archived_at",
                 "deleted_at",
+                "type_id",
             )
             datetime_fields = ["created_at", "updated_at"]
             issues = user_timezone_converter(issues, datetime_fields, request.user.user_timezone)
@@ -209,19 +211,18 @@ class IssueViewSet(BaseViewSet):
     model = Issue
     webhook_event = "issue"
     search_fields = ["name"]
-    filter_backends = (ComplexFilterBackend,)
+    filter_backends = (IssueFilterBackend,)
     filterset_class = IssueFilterSet
 
     def get_serializer_class(self):
         return IssueCreateSerializer if self.action in ["create", "update", "partial_update"] else IssueSerializer
 
     def get_queryset(self):
-        issues = Issue.issue_objects.filter(
-            project_id=self.kwargs.get("project_id"),
+        project = Project.objects.get(
+            pk=self.kwargs.get("project_id"),
             workspace__slug=self.kwargs.get("slug"),
-        ).distinct()
-
-        return issues
+        )
+        return issues_visible_in_project(self.kwargs.get("slug"), project)
 
     def apply_annotations(self, issues):
         issues = (
@@ -464,6 +465,7 @@ class IssueViewSet(BaseViewSet):
                     "is_draft",
                     "archived_at",
                     "deleted_at",
+                    "type_id",
                 )
                 .first()
             )
@@ -817,8 +819,8 @@ class IssuePaginatedViewSet(BaseViewSet):
     def get_queryset(self):
         workspace_slug = self.kwargs.get("slug")
         project_id = self.kwargs.get("project_id")
-
-        issue_queryset = Issue.issue_objects.filter(workspace__slug=workspace_slug, project_id=project_id)
+        project = Project.objects.get(pk=project_id, workspace__slug=workspace_slug)
+        issue_queryset = issues_visible_in_project(workspace_slug, project)
 
         return (
             issue_queryset.select_related("state")
@@ -895,6 +897,7 @@ class IssuePaginatedViewSet(BaseViewSet):
             "link_count",
             "attachment_count",
             "sub_issues_count",
+            "type_id",
         ]
 
         if str(is_description_required).lower() == "true":
@@ -973,7 +976,7 @@ class IssuePaginatedViewSet(BaseViewSet):
 
 
 class IssueDetailEndpoint(BaseAPIView):
-    filter_backends = (ComplexFilterBackend,)
+    filter_backends = (IssueFilterBackend,)
     filterset_class = IssueFilterSet
 
     def apply_annotations(self, issues):

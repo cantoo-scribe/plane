@@ -38,7 +38,9 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserProfile } from "@/hooks/store/user";
 // plane web components
 import { IssueParentSelectRoot } from "@/components/issues/parent-select-root";
+import { IssueCrossLinkSelect } from "@/components/issues/linked-project-select";
 import { IssueTimeTracking } from "@/components/time-tracking/issue-time-tracking";
+import { IssueCustomProperties } from "@/components/work-item-types/issue-custom-properties";
 import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
@@ -234,9 +236,72 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
           />
         </SidebarPropertyListItem>
 
+        {projectDetails?.is_okr ? (
+          <>
+            <SidebarPropertyListItem icon={ModuleOutline} label={t("linked_teamspace")}>
+              <IssueCrossLinkSelect
+                className="h-7.5 w-full grow"
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                issueId={issueId}
+                issueOperations={issueOperations}
+                disabled={disabled}
+                linkKind="teamspace"
+              />
+            </SidebarPropertyListItem>
+            <SidebarPropertyListItem icon={ModuleOutline} label={t("linked_project")}>
+              <IssueCrossLinkSelect
+                className="h-7.5 w-full grow"
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                issueId={issueId}
+                issueOperations={issueOperations}
+                disabled={disabled}
+                linkKind="project"
+              />
+            </SidebarPropertyListItem>
+          </>
+        ) : (
+          <>
+            <SidebarPropertyListItem
+              icon={ModuleOutline}
+              label={projectDetails?.is_teamspace ? t("linked_project") : t("linked_teamspace")}
+            >
+              <IssueCrossLinkSelect
+                className="h-7.5 w-full grow"
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                issueId={issueId}
+                issueOperations={issueOperations}
+                disabled={disabled}
+                linkKind={projectDetails?.is_teamspace ? "project" : "teamspace"}
+              />
+            </SidebarPropertyListItem>
+            <SidebarPropertyListItem icon={ModuleOutline} label={t("linked_okr")}>
+              <IssueCrossLinkSelect
+                className="h-7.5 w-full grow"
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                issueId={issueId}
+                issueOperations={issueOperations}
+                disabled={disabled}
+                linkKind="okr"
+              />
+            </SidebarPropertyListItem>
+          </>
+        )}
+
         <SidebarPropertyListItem icon={LabelsOutline} label={t("common.labels")}>
           <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
         </SidebarPropertyListItem>
+
+        <IssueCustomProperties
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issueId}
+          issueTypeId={issue.type_id}
+          disabled={disabled}
+        />
       </div>
     </div>
   );

@@ -230,7 +230,15 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                 </Tooltip>
               )}
               {displayProperties && (displayProperties.key || displayProperties.issue_type) && (
-                <div className="flex-shrink-0" style={{ minWidth: `${keyMinWidth}px` }}>
+                <div
+                  className={cn("flex-shrink-0", {
+                    "rounded bg-surface-2 px-0.5": projectId && issue.project_id !== projectId,
+                  })}
+                  style={{ minWidth: `${keyMinWidth}px` }}
+                  title={
+                    projectId && issue.project_id !== projectId ? "Work item from linked project / pole" : undefined
+                  }
+                >
                   {issue.project_id && (
                     <IssueIdentifier
                       issueId={issueId}

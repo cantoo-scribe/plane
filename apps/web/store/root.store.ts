@@ -23,6 +23,8 @@ import type { ITimelineStore } from "./timeline/timeline.store";
 import { TimeLineStore } from "./timeline/timeline.store";
 import type { ITimeEntryStore } from "./time-entry.store";
 import { TimeEntryStore } from "./time-entry.store";
+import type { IIssueTypeStore } from "./issue-type.store";
+import { IssueTypeStore } from "./issue-type.store";
 // stores
 import type { ICycleStore } from "./cycle.store";
 import { CycleStore } from "./cycle.store";
@@ -106,6 +108,7 @@ export class CoreRootStore {
   powerK: IPowerKStore;
   timelineStore: ITimelineStore;
   timeEntry: ITimeEntryStore;
+  issueType: IIssueTypeStore;
 
   constructor() {
     this.router = new RouterStore();
@@ -139,6 +142,7 @@ export class CoreRootStore {
     this.powerK = new PowerKStore();
     this.timelineStore = new TimeLineStore(this);
     this.timeEntry = new TimeEntryStore(this);
+    this.issueType = new IssueTypeStore(this);
   }
 
   resetOnSignOut() {
@@ -174,6 +178,7 @@ export class CoreRootStore {
     this.powerK = new PowerKStore();
     this.timelineStore = new TimeLineStore(this);
     this.timeEntry = new TimeEntryStore(this);
+    this.issueType = new IssueTypeStore(this);
   }
 }
 

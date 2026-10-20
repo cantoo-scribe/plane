@@ -38,7 +38,12 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
   // store hooks
   const { t } = useTranslation();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
-  const { getPartialProjectById, joinedProjectIds: joinedProjects, updateProjectView } = useProject();
+  const {
+    getPartialProjectById,
+    joinedRegularProjectIds: joinedProjects,
+    visibleRegularProjectIds: visibleProjects,
+    updateProjectView,
+  } = useProject();
   const { allowPermissions } = useUserPermissions();
 
   const handleOnProjectDrop = (
@@ -71,8 +76,8 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
       });
   };
 
-  // filter projects based on search query
-  const filteredProjects = joinedProjects.filter((projectId) => {
+  // filter projects based on search query (include public projects without join)
+  const filteredProjects = visibleProjects.filter((projectId) => {
     const project = getPartialProjectById(projectId);
     if (!project) return false;
     return project.name.toLowerCase().includes(searchQuery.toLowerCase()) || project.identifier.includes(searchQuery);
@@ -87,12 +92,13 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
   const handleClose = useCallback(() => toggleExtendedProjectSidebar(false), [toggleExtendedProjectSidebar]);
 
   const handleCopyText = (projectId: string) => {
-    copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
+    void copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
       setToast({
         type: "success",
         title: t("link_copied"),
         message: t("project_link_copied_to_clipboard"),
       });
+      return undefined;
     });
   };
   return (
@@ -138,6 +144,7 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
                 type="text"
                 placeholder={t("search")}
                 value={searchQuery}
+                // oxlint-disable-next-line eslint-plugin-jsx-a11y/no-autofocus -- intentional focus when opening the search sidebar
                 autoFocus
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

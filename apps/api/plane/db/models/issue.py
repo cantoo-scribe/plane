@@ -168,6 +168,31 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         null=True,
         blank=True,
     )
+    # Optional cross-links for dual/triple-list visibility (home project stays canonical)
+    linked_project = models.ForeignKey(
+        "db.Project",
+        on_delete=models.SET_NULL,
+        related_name="linked_issues",
+        null=True,
+        blank=True,
+        help_text="Optional regular (client) project link",
+    )
+    linked_teamspace = models.ForeignKey(
+        "db.Project",
+        on_delete=models.SET_NULL,
+        related_name="teamspace_linked_issues",
+        null=True,
+        blank=True,
+        help_text="Optional teamspace / pôle link",
+    )
+    linked_okr = models.ForeignKey(
+        "db.Project",
+        on_delete=models.SET_NULL,
+        related_name="okr_linked_issues",
+        null=True,
+        blank=True,
+        help_text="Optional OKR link",
+    )
 
     issue_objects = IssueManager()
 
