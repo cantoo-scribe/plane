@@ -77,6 +77,20 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/time-tracking", "./(all)/[workspaceSlug]/(projects)/time-tracking/page.tsx"),
         ]),
 
+        // Workspace automations
+        layout("./(all)/[workspaceSlug]/(projects)/automations/layout.tsx", [
+          route(":workspaceSlug/automations", "./(all)/[workspaceSlug]/(projects)/automations/page.tsx"),
+          route(
+            ":workspaceSlug/automations/:automationId",
+            "./(all)/[workspaceSlug]/(projects)/automations/[automationId]/page.tsx"
+          ),
+        ]),
+
+        // Workspace forms
+        layout("./(all)/[workspaceSlug]/(projects)/forms/layout.tsx", [
+          route(":workspaceSlug/forms", "./(all)/[workspaceSlug]/(projects)/forms/page.tsx"),
+        ]),
+
         // Browse
         layout("./(all)/[workspaceSlug]/(projects)/browse/[workItem]/layout.tsx", [
           route(":workspaceSlug/browse/:workItem", "./(all)/[workspaceSlug]/(projects)/browse/[workItem]/page.tsx"),

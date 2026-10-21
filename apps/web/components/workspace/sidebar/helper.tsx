@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { FileText, Zap } from "lucide-react";
 import {
   AnalyticsOutline,
   ArchiveOutline,
@@ -35,6 +36,10 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
       return <AnalyticsOutline className={cn("size-4 flex-shrink-0", className)} />;
     case "time-tracking":
       return <TimeTrackingOutline className={cn("size-4 flex-shrink-0", className)} />;
+    case "automations":
+      return <Zap className={cn("size-4 flex-shrink-0", className)} />;
+    case "forms":
+      return <FileText className={cn("size-4 flex-shrink-0", className)} />;
     case "your_work":
       return <YourWorkOutline className={cn("size-4 flex-shrink-0", className)} />;
     case "drafts":

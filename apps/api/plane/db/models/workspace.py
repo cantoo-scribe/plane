@@ -422,6 +422,8 @@ class WorkspaceUserPreference(BaseModel):
         ACTIVE_CYCLES = "active_cycles", "Active Cycles"
         ANALYTICS = "analytics", "Analytics"
         TIME_TRACKING = "time-tracking", "Time tracking"
+        AUTOMATIONS = "automations", "Automations"
+        FORMS = "forms", "Forms"
         DRAFTS = "drafts", "Drafts"
         YOUR_WORK = "your_work", "Your Work"
         ARCHIVES = "archives", "Archives"

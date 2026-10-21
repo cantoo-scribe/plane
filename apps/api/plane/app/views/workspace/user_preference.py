@@ -51,6 +51,8 @@ class WorkspaceUserPreferenceViewSet(BaseAPIView):
                                     WorkspaceUserPreference.UserPreferenceKeys.YOUR_WORK,
                                     WorkspaceUserPreference.UserPreferenceKeys.STICKIES,
                                     WorkspaceUserPreference.UserPreferenceKeys.TIME_TRACKING,
+                                    WorkspaceUserPreference.UserPreferenceKeys.AUTOMATIONS,
+                                    WorkspaceUserPreference.UserPreferenceKeys.FORMS,
                                 ]
                                 else False
                             ),

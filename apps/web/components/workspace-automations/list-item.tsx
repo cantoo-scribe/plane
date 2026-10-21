@@ -33,10 +33,7 @@ export function WorkspaceAutomationsListItem(props: Props) {
 
   return (
     <div className="rounded-lg border border-subtle bg-layer-2 px-4 py-3">
-      <Link
-        href={`/${workspaceSlug}/settings/automations/${automation.id}`}
-        className="flex items-center justify-between gap-4"
-      >
+      <Link href={`/${workspaceSlug}/automations/${automation.id}`} className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <h5 className="truncate text-body-sm-medium">{automation.name}</h5>
           <p className="text-body-xs truncate text-tertiary">{t(triggerLabelKey)}</p>

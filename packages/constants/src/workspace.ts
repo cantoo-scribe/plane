@@ -56,6 +56,8 @@ export const RESTRICTED_URLS: string[] = [
   "config",
   "workflow",
   "workflows",
+  "automations",
+  "forms",
   "epics",
   "epic",
   "story",
@@ -227,12 +229,28 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     highlight: (pathname: string, url: string) => pathname.includes(url),
   },
+  automations: {
+    key: "automations",
+    labelTranslationKey: "sidebar.automations",
+    href: `/automations/`,
+    access: [EUserWorkspaceRoles.ADMIN],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
+  forms: {
+    key: "forms",
+    labelTranslationKey: "sidebar.forms",
+    href: `/forms/`,
+    access: [EUserWorkspaceRoles.ADMIN],
+    highlight: (pathname: string, url: string) => pathname.includes(url),
+  },
 };
 
 export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebarNavigationItem[] = [
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["time-tracking"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["automations"],
+  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["forms"],
   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
 ];
 

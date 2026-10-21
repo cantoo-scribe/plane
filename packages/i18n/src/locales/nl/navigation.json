@@ -17,6 +17,8 @@
     "workspace": "Werkruimte",
     "views": "Weergaven",
     "analytics": "Analyses",
+    "automations": "Automatiseringen",
+    "forms": "Formulieren",
     "work_items": "Werkitems",
     "cycles": "Cycli",
     "modules": "Modules",

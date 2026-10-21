@@ -5,7 +5,6 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Zap } from "lucide-react";
 import {
   BillingsOutline,
   BuildingOutline,
@@ -23,5 +22,4 @@ export const WORKSPACE_SETTINGS_ICONS: Record<TWorkspaceSettingsTabs, LucideIcon
   export: ExportOutline,
   "billing-and-plans": BillingsOutline,
   webhooks: WebhooksOutline,
-  automations: Zap,
 };

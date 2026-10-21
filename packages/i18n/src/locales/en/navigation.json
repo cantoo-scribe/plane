@@ -17,6 +17,8 @@
     "workspace": "Workspace",
     "views": "Views",
     "analytics": "Analytics",
+    "automations": "Automations",
+    "forms": "Forms",
     "work_items": "Work items",
     "cycles": "Cycles",
     "modules": "Modules",
