@@ -266,7 +266,10 @@
             "with_access": "Habilite os tipos de item de trabalho para importar tipos do nível do espaço de trabalho",
             "without_access": "Os tipos de item de trabalho estão desabilitados. Entre em contato com o administrador do espaço de trabalho para habilitá-los nas configurações do espaço de trabalho."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Propriedades personalizadas",

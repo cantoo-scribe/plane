@@ -4,10 +4,12 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
+import { SquareDashed } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import type { TIssueType } from "@plane/types";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
 import { Switch } from "@makeplane/propel/components/switch";
@@ -38,7 +40,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
   const { workspaceSlug, isAdmin, scope } = props;
   const projectId = scope === "project" ? props.projectId : undefined;
   const { t } = useTranslation();
-  const { getProjectById, updateProject } = useProject();
+  const { getProjectById, updateProject, workspaceProjectIds } = useProject();
   const { currentWorkspace } = useWorkspace();
   const {
     getProjectIssueTypes,
@@ -54,6 +56,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
     deleteWorkspaceIssueType,
     markAsDefault,
     markWorkspaceIssueTypeAsDefault,
+    makeWorkspaceIssueTypeGlobal,
     deleteProperty,
     deleteWorkspaceProperty,
   } = useIssueType();
@@ -64,6 +67,40 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
   const isEditable = scope === "workspace" || (scope === "project" && issueTypeSource === "CUSTOM");
 
   const types = scope === "workspace" ? getWorkspaceIssueTypes(currentWorkspace?.id) : getProjectIssueTypes(projectId);
+
+  const typeGroups = useMemo(() => {
+    if (scope !== "workspace") {
+      return [{ key: "project", label: null as string | null, types }];
+    }
+    const globalTypes = types.filter((type) => !type.project_ids?.length);
+    const projectIds = new Set<string>();
+    types.forEach((type) => {
+      (type.project_ids ?? []).forEach((id) => projectIds.add(id));
+    });
+    const orderedProjectIds = (workspaceProjectIds || []).filter((id) => projectIds.has(id));
+    // Include any orphan project ids not in the current member list
+    projectIds.forEach((id) => {
+      if (!orderedProjectIds.includes(id)) orderedProjectIds.push(id);
+    });
+    const groups: { key: string; label: string | null; types: TIssueType[] }[] = [
+      {
+        key: "global",
+        label: t("work_item_types.settings.types.group_all_projects"),
+        types: globalTypes,
+      },
+    ];
+    orderedProjectIds.forEach((id) => {
+      const projectMeta = getProjectById(id);
+      const projectTypes = types.filter((type) => type.project_ids?.includes(id));
+      if (!projectTypes.length) return;
+      groups.push({
+        key: id,
+        label: projectMeta?.name ?? id,
+        types: projectTypes,
+      });
+    });
+    return groups;
+  }, [scope, types, workspaceProjectIds, getProjectById, t]);
 
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [showTypeForm, setShowTypeForm] = useState(false);
@@ -179,6 +216,24 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
       await deleteIssueType(workspaceSlug, projectId!, typeId);
     }
     if (selectedTypeId === typeId) setSelectedTypeId(null);
+  };
+
+  const handleMakeGlobal = async (typeId: string) => {
+    if (scope !== "workspace" || !isAdmin) return;
+    try {
+      await makeWorkspaceIssueTypeGlobal(workspaceSlug, typeId);
+      setToast({
+        type: "success",
+        title: "Success!",
+        message: t("work_item_types.settings.types.make_global_success"),
+      });
+    } catch {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: t("common.something_went_wrong"),
+      });
+    }
   };
 
   const handleDeleteProperty = async (propertyId: string) => {
@@ -340,51 +395,85 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
               </div>
             )}
 
-            <div className="flex flex-col gap-1">
-              {types.map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left text-body-sm-medium transition-colors ${
-                    selectedTypeId === type.id ? "bg-layer-2 text-primary" : "text-secondary hover:bg-layer-1"
-                  }`}
-                  onClick={() => {
-                    setSelectedTypeId(type.id);
-                    setShowPropertyForm(false);
-                    setEditingPropertyId(null);
-                  }}
-                >
-                  <span className="truncate">
-                    {type.name}
-                    {type.is_default ? (
-                      <span className="ml-1.5 text-caption-md-regular text-tertiary">({t("common.default")})</span>
-                    ) : null}
-                  </span>
-                  {isAdmin && isEditable && !type.is_default && (
-                    <span className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        className="text-caption-md-regular text-tertiary hover:text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleMarkDefault(type.id);
-                        }}
-                      >
-                        {t("work_item_types.settings.set_as_default")}
-                      </button>
-                      <button
-                        type="button"
-                        className="text-caption-md-regular text-tertiary hover:text-danger-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleDeleteType(type.id);
-                        }}
-                      >
-                        {t("common.delete")}
-                      </button>
-                    </span>
+            <div className="flex flex-col gap-4">
+              {typeGroups.map((group) => (
+                <div key={group.key} className="flex flex-col gap-1">
+                  {group.label && (
+                    <div className="px-1 pb-1 text-caption-md-medium tracking-wide text-tertiary uppercase">
+                      {group.label}
+                    </div>
                   )}
-                </button>
+                  {group.types.map((type) => {
+                    const isProjectSpecific = Boolean(type.project_ids?.length);
+                    const showMakeGlobal = scope === "workspace" && isProjectSpecific;
+                    const showSetDefault = !type.is_default && (scope === "project" || !isProjectSpecific);
+                    return (
+                      <button
+                        key={type.id}
+                        type="button"
+                        className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2.5 text-left text-body-sm-medium transition-colors ${
+                          selectedTypeId === type.id ? "bg-layer-2 text-primary" : "text-secondary hover:bg-layer-1"
+                        }`}
+                        onClick={() => {
+                          setSelectedTypeId(type.id);
+                          setShowPropertyForm(false);
+                          setEditingPropertyId(null);
+                        }}
+                      >
+                        <span className="truncate">
+                          {type.name}
+                          {type.is_default ? (
+                            <span className="ml-1.5 text-caption-md-regular text-tertiary">
+                              ({t("common.default")})
+                            </span>
+                          ) : null}
+                        </span>
+                        {isAdmin && isEditable && (
+                          <span className="flex shrink-0 items-center gap-2">
+                            {showMakeGlobal && (
+                              <button
+                                type="button"
+                                className="rounded p-1 text-tertiary hover:bg-layer-1 hover:text-primary"
+                                title={t("work_item_types.settings.types.make_global")}
+                                aria-label={t("work_item_types.settings.types.make_global")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleMakeGlobal(type.id);
+                                }}
+                              >
+                                <SquareDashed className="size-3.5" />
+                              </button>
+                            )}
+                            {showSetDefault && (
+                              <button
+                                type="button"
+                                className="text-caption-md-regular text-tertiary hover:text-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleMarkDefault(type.id);
+                                }}
+                              >
+                                {t("work_item_types.settings.set_as_default")}
+                              </button>
+                            )}
+                            {!type.is_default && (
+                              <button
+                                type="button"
+                                className="text-caption-md-regular text-tertiary hover:text-danger-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleDeleteType(type.id);
+                                }}
+                              >
+                                {t("common.delete")}
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               ))}
               {!types.length && (
                 <p className="px-1 text-body-sm-regular text-tertiary">

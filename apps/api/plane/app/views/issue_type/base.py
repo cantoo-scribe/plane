@@ -4,7 +4,7 @@
 
 # Django imports
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch, Q
 
 # Third party imports
 from rest_framework import status
@@ -21,6 +21,20 @@ def _project_uses_workspace_types(project: Project) -> bool:
     return project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE
 
 
+def _workspace_global_types_queryset(slug):
+    """Types with no project binding — the shared workspace catalog."""
+    return (
+        IssueType.objects.filter(workspace__slug=slug)
+        .annotate(
+            project_link_count=Count(
+                "project_issue_types",
+                filter=Q(project_issue_types__deleted_at__isnull=True),
+            )
+        )
+        .filter(project_link_count=0)
+    )
+
+
 class IssueTypeViewSet(BaseViewSet):
     serializer_class = IssueTypeSerializer
     model = IssueType
@@ -31,10 +45,10 @@ class IssueTypeViewSet(BaseViewSet):
     def get_queryset(self):
         project_id = self.kwargs.get("project_id")
         project = self._get_project(self.kwargs.get("slug"), project_id)
-        base = IssueType.objects.filter(workspace__slug=self.kwargs.get("slug"))
+        slug = self.kwargs.get("slug")
 
         if project and _project_uses_workspace_types(project):
-            return base.prefetch_related(
+            return _workspace_global_types_queryset(slug).prefetch_related(
                 Prefetch(
                     "project_issue_types",
                     queryset=ProjectIssueType.objects.filter(project_id=project_id),
@@ -42,7 +56,8 @@ class IssueTypeViewSet(BaseViewSet):
             ).distinct()
 
         return (
-            base.filter(project_issue_types__project_id=project_id)
+            IssueType.objects.filter(workspace__slug=slug)
+            .filter(project_issue_types__project_id=project_id)
             .filter(
                 project_issue_types__project__project_projectmember__member=self.request.user,
                 project_issue_types__project__project_projectmember__is_active=True,

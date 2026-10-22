@@ -266,7 +266,10 @@
             "with_access": "启用工作项类型以从工作区级别导入类型",
             "without_access": "工作项类型已禁用。请联系工作区管理员在工作区设置中启用。"
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "自定义属性",

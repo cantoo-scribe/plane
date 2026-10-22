@@ -46,6 +46,11 @@ export class IssueTypeService extends APIService {
     await this.post(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/mark-default/`);
   }
 
+  async makeWorkspaceIssueTypeGlobal(workspaceSlug: string, typeId: string): Promise<TIssueType> {
+    const { data } = await this.post(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/make-global/`);
+    return data;
+  }
+
   async fetchWorkspaceProperties(workspaceSlug: string, typeId: string): Promise<TIssueCustomProperty[]> {
     const { data } = await this.get(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/properties/`);
     return data;

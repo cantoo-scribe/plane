@@ -266,7 +266,10 @@
             "with_access": "Включите типы рабочих элементов, чтобы импортировать типы с уровня рабочего пространства",
             "without_access": "Типы рабочих элементов отключены. Обратитесь к администратору рабочего пространства, чтобы включить их в настройках рабочего пространства."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Пользовательские свойства",

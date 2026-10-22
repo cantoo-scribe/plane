@@ -250,6 +250,9 @@
       "types": {
         "title": "Types",
         "description": "Create and customize work item types with properties.",
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects",
         "sort_options": {
           "project_count": "Number of projects part of"
         },

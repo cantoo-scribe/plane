@@ -266,7 +266,10 @@
             "with_access": "Włącz typy elementów pracy, aby importować typy z poziomu przestrzeni roboczej",
             "without_access": "Typy elementów pracy są wyłączone. Skontaktuj się z administratorem przestrzeni roboczej, aby je włączyć w ustawieniach przestrzeni roboczej."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Niestandardowe właściwości",

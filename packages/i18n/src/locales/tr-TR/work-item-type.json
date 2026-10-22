@@ -266,7 +266,10 @@
             "with_access": "Çalışma alanı seviyesinden türleri içe aktarmak için iş öğesi türlerini etkinleştirin",
             "without_access": "İş öğesi türleri devre dışı. Çalışma alanı ayarlarından etkinleştirmek için çalışma alanı yöneticisiyle iletişime geçin."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Özel özellikler",

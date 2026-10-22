@@ -266,7 +266,10 @@
             "with_access": "Aktivieren Sie Arbeitsaufgabentypen, um Typen von der Arbeitsbereichsebene zu importieren",
             "without_access": "Arbeitsaufgabentypen sind deaktiviert. Wenden Sie sich an den Arbeitsbereichs-Administrator, um sie in den Arbeitsbereichseinstellungen zu aktivieren."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Benutzerdefinierte Eigenschaften",

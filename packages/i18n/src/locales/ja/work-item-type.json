@@ -266,7 +266,10 @@
             "with_access": "ワークスペースレベルからタイプをインポートするには、作業項目タイプを有効にしてください",
             "without_access": "作業項目タイプは無効になっています。ワークスペース管理者に連絡して、ワークスペース設定で有効にしてもらってください。"
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "カスタムプロパティ",

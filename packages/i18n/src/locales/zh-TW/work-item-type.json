@@ -266,7 +266,10 @@
             "with_access": "啟用工作事項類型以從工作區層級匯入類型",
             "without_access": "工作事項類型已停用。請聯絡工作區管理員在工作區設定中啟用。"
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "自訂屬性",

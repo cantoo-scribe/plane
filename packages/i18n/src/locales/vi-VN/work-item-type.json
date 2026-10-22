@@ -266,7 +266,10 @@
             "with_access": "Bật loại mục công việc để nhập các loại từ cấp không gian làm việc",
             "without_access": "Loại mục công việc đã bị tắt. Liên hệ quản trị viên không gian làm việc để bật trong cài đặt không gian làm việc."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Thuộc tính tùy chỉnh",

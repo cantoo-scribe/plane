@@ -34,7 +34,11 @@ def _project_can_access_type(slug, project_id, type_id) -> bool:
     if not project:
         return False
     if project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
-        return IssueType.objects.filter(workspace_id=project.workspace_id, pk=type_id).exists()
+        # Workspace-mode projects only use unbound (global) types.
+        return (
+            IssueType.objects.filter(workspace_id=project.workspace_id, pk=type_id).exists()
+            and not ProjectIssueType.objects.filter(issue_type_id=type_id).exists()
+        )
     return ProjectIssueType.objects.filter(
         workspace__slug=slug,
         project_id=project_id,

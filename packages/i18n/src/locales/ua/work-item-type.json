@@ -266,7 +266,10 @@
             "with_access": "Увімкніть типи робочих одиниць, щоб імпортувати типи з рівня робочого простору",
             "without_access": "Типи робочих одиниць вимкнено. Зверніться до адміністратора робочого простору, щоб увімкнути їх у налаштуваннях робочого простору."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Користувацькі властивості",

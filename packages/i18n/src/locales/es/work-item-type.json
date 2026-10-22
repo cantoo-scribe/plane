@@ -266,7 +266,10 @@
             "with_access": "Habilita los tipos de elementos de trabajo para importar tipos desde el nivel del espacio de trabajo",
             "without_access": "Los tipos de elementos de trabajo están deshabilitados. Contacta al administrador del espacio de trabajo para habilitarlos en la configuración del espacio de trabajo."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Propiedades personalizadas",

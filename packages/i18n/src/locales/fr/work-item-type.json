@@ -250,6 +250,9 @@
       "types": {
         "title": "Types",
         "description": "Créez et personnalisez les types d’éléments de travail avec des propriétés.",
+        "group_all_projects": "Tous les projets",
+        "make_global": "Rendre disponible pour tous les projets",
+        "make_global_success": "Le type d’élément de travail est désormais disponible pour tous les projets",
         "sort_options": {
           "project_count": "Nombre de projets concernés"
         },

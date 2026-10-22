@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import Count, Q
 
 # Third Party imports
 from rest_framework import serializers
@@ -257,11 +258,22 @@ class IssueCreateSerializer(BaseSerializer):
         if issue_type is None:
             project = Project.objects.filter(pk=project_id).first()
             if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
-                issue_type = IssueType.objects.filter(
-                    workspace_id=workspace_id,
-                    is_default=True,
-                    is_active=True,
-                ).first()
+                # Workspace catalog default: types not bound to any project.
+                issue_type = (
+                    IssueType.objects.filter(
+                        workspace_id=workspace_id,
+                        is_default=True,
+                        is_active=True,
+                    )
+                    .annotate(
+                        _links=Count(
+                            "project_issue_types",
+                            filter=Q(project_issue_types__deleted_at__isnull=True),
+                        )
+                    )
+                    .filter(_links=0)
+                    .first()
+                )
             else:
                 issue_type = IssueType.objects.filter(
                     project_issue_types__project_id=project_id,

@@ -31,6 +31,11 @@ urlpatterns = [
         name="workspace-issue-type-mark-default",
     ),
     path(
+        "workspaces/<str:slug>/issue-types/<uuid:pk>/make-global/",
+        WorkspaceIssueTypeViewSet.as_view({"post": "make_global"}),
+        name="workspace-issue-type-make-global",
+    ),
+    path(
         "workspaces/<str:slug>/issue-types/<uuid:type_id>/properties/",
         WorkspaceIssueCustomPropertyViewSet.as_view({"get": "list", "post": "create"}),
         name="workspace-issue-type-properties",

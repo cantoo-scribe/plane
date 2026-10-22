@@ -266,7 +266,10 @@
             "with_access": "워크스페이스 수준에서 타입을 가져오려면 작업 항목 유형을 활성화하세요",
             "without_access": "작업 항목 유형이 비활성화되어 있습니다. 워크스페이스 관리자에게 문의하여 워크스페이스 설정에서 활성화하세요."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "커스텀 프로퍼티",

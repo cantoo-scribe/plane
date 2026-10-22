@@ -117,6 +117,14 @@ class WorkspaceIssueTypeViewSet(BaseViewSet):
                 {"error": "Activate this type before setting it as default"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if ProjectIssueType.objects.filter(issue_type_id=pk).exists():
+            return Response(
+                {
+                    "error": "Only workspace-wide types can be the workspace default. "
+                    "Make this type global first."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         with transaction.atomic():
             IssueType.objects.filter(workspace_id=issue_type.workspace_id, is_default=True).update(is_default=False)
@@ -124,6 +132,23 @@ class WorkspaceIssueTypeViewSet(BaseViewSet):
             issue_type.save(update_fields=["is_default", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @allow_permission([ROLE.ADMIN], level="WORKSPACE")
+    def make_global(self, request, slug, pk):
+        """Detach a project-specific type so it becomes part of the workspace catalog."""
+        issue_type = self.get_queryset().filter(pk=pk).first()
+        if not issue_type:
+            return Response({"error": "Work item type not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        links = ProjectIssueType.objects.filter(issue_type_id=pk)
+        if not links.exists():
+            serializer = IssueTypeSerializer(issue_type, context=self.get_serializer_context())
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        links.delete()
+        issue_type = self.get_queryset().get(pk=pk)
+        serializer = IssueTypeSerializer(issue_type, context=self.get_serializer_context())
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN], level="WORKSPACE")
     def destroy(self, request, slug, pk):

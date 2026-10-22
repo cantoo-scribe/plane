@@ -266,7 +266,10 @@
             "with_access": "Povolte typy pracovních položek pro import typů z úrovně pracovního prostoru",
             "without_access": "Typy pracovních položek jsou zakázány. Kontaktujte správce pracovního prostoru, aby je povolil v nastavení pracovního prostoru."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Vlastní vlastnosti",

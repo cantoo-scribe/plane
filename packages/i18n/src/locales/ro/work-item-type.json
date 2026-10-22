@@ -266,7 +266,10 @@
             "with_access": "Activează tipurile de activități pentru a importa tipuri de la nivelul spațiului de lucru",
             "without_access": "Tipurile de activități sunt dezactivate. Contactează administratorul spațiului de lucru pentru a le activa în setările spațiului de lucru."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Proprietăți personalizate",

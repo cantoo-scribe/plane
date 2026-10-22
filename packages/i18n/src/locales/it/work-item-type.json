@@ -266,7 +266,10 @@
             "with_access": "Abilita i tipi di elementi di lavoro per importare i tipi dal livello dello spazio di lavoro",
             "without_access": "I tipi di elementi di lavoro sono disabilitati. Contatta l'admin dello spazio di lavoro per abilitarli nelle impostazioni dello spazio di lavoro."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Proprietà personalizzate",

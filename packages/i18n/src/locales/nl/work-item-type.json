@@ -266,7 +266,10 @@
             "with_access": "Schakel werkitemtypes in om types op werkruimteniveau te importeren",
             "without_access": "Werkitemtypes zijn uitgeschakeld. Neem contact op met de beheerder van de werkruimte om ze in te schakelen in de werkruimte-instellingen."
           }
-        }
+        },
+        "group_all_projects": "All projects",
+        "make_global": "Make available to all projects",
+        "make_global_success": "Work item type is now available to all projects"
       },
       "linked_properties": {
         "title": "Aangepaste eigenschappen",

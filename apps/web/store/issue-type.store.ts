@@ -24,6 +24,7 @@ export interface IIssueTypeStore {
   fetchedPropertiesMap: Record<string, boolean>;
   getProjectIssueTypes: (projectId: string | undefined | null) => TIssueType[];
   getWorkspaceIssueTypes: (workspaceId: string | undefined | null) => TIssueType[];
+  getWorkspaceGlobalIssueTypes: (workspaceId: string | undefined | null) => TIssueType[];
   getDefaultIssueTypeId: (projectId: string | undefined | null) => string | null;
   getIssueTypeById: (typeId: string | undefined | null) => TIssueType | undefined;
   getPropertiesForType: (typeId: string | undefined | null) => TIssueCustomProperty[];
@@ -34,6 +35,7 @@ export interface IIssueTypeStore {
   updateWorkspaceIssueType: (workspaceSlug: string, typeId: string, data: Partial<TIssueType>) => Promise<TIssueType>;
   deleteWorkspaceIssueType: (workspaceSlug: string, typeId: string) => Promise<void>;
   markWorkspaceIssueTypeAsDefault: (workspaceSlug: string, typeId: string) => Promise<void>;
+  makeWorkspaceIssueTypeGlobal: (workspaceSlug: string, typeId: string) => Promise<TIssueType>;
   fetchWorkspaceProperties: (workspaceSlug: string, typeId: string) => Promise<TIssueCustomProperty[]>;
   createWorkspaceProperty: (
     workspaceSlug: string,
@@ -113,6 +115,7 @@ export class IssueTypeStore implements IIssueTypeStore {
       updateWorkspaceIssueType: action,
       deleteWorkspaceIssueType: action,
       markWorkspaceIssueTypeAsDefault: action,
+      makeWorkspaceIssueTypeGlobal: action,
       fetchWorkspaceProperties: action,
       createWorkspaceProperty: action,
       updateWorkspaceProperty: action,
@@ -136,12 +139,32 @@ export class IssueTypeStore implements IIssueTypeStore {
 
   getProjectIssueTypes = computedFn((projectId: string | undefined | null) => {
     if (!projectId) return [];
+    const project = this.rootStore.projectRoot.project.getProjectById(projectId);
+    const source = project?.issue_type_source ?? "WORKSPACE";
+    if (source === "WORKSPACE") {
+      const workspaceId =
+        typeof project?.workspace === "object" && project.workspace
+          ? project.workspace.id
+          : (project?.workspace as string | undefined);
+      return Object.values(this.typeMap).filter(
+        (type) =>
+          (!workspaceId || type.workspace_id === workspaceId) && (!type.project_ids || type.project_ids.length === 0)
+      );
+    }
     return Object.values(this.typeMap).filter((type) => type.project_ids?.includes(projectId));
   });
 
   getWorkspaceIssueTypes = computedFn((workspaceId: string | undefined | null) => {
     if (!workspaceId) return [];
     return Object.values(this.typeMap).filter((type) => type.workspace_id === workspaceId);
+  });
+
+  /** Workspace catalog types (not bound to any project). */
+  getWorkspaceGlobalIssueTypes = computedFn((workspaceId: string | undefined | null) => {
+    if (!workspaceId) return [];
+    return Object.values(this.typeMap).filter(
+      (type) => type.workspace_id === workspaceId && (!type.project_ids || type.project_ids.length === 0)
+    );
   });
 
   getDefaultIssueTypeId = computedFn((projectId: string | undefined | null) => {
@@ -213,6 +236,14 @@ export class IssueTypeStore implements IIssueTypeStore {
     });
   };
 
+  makeWorkspaceIssueTypeGlobal = async (workspaceSlug: string, typeId: string) => {
+    const type = await this.service.makeWorkspaceIssueTypeGlobal(workspaceSlug, typeId);
+    runInAction(() => {
+      this.typeMap[type.id] = { ...type, project_ids: [] };
+    });
+    return type;
+  };
+
   fetchWorkspaceProperties = async (workspaceSlug: string, typeId: string) => {
     const properties = await this.service.fetchWorkspaceProperties(workspaceSlug, typeId);
     runInAction(() => {
@@ -260,11 +291,8 @@ export class IssueTypeStore implements IIssueTypeStore {
     const types = await this.service.fetchProjectIssueTypes(workspaceSlug, projectId);
     runInAction(() => {
       types.forEach((type) => {
-        const projectIds = new Set([...(type.project_ids ?? []), projectId]);
-        this.typeMap[type.id] = {
-          ...type,
-          project_ids: Array.from(projectIds),
-        };
+        // Keep API project_ids as source of truth (empty = workspace-global).
+        this.typeMap[type.id] = type;
       });
       this.fetchedTypesMap[projectId] = true;
     });
