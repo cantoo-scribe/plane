@@ -98,7 +98,7 @@ export function FieldValueEditor(props: Props) {
   return (
     <div className="grid gap-2 md:grid-cols-2">
       <select
-        className={selectClass}
+        className={`${selectClass}${value.mode === "relative_date" ? " md:col-span-2" : ""}`}
         value={value.mode}
         onChange={(e) => setMode(e.target.value as TWorkspaceAutomationFieldValue["mode"])}
       >
@@ -200,9 +200,9 @@ export function FieldValueEditor(props: Props) {
       )}
 
       {value.mode === "relative_date" && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 md:col-span-2">
           <select
-            className={selectClass}
+            className={`${selectClass} min-w-[9rem] flex-1 basis-[9rem]`}
             value={value.base}
             onChange={(e) =>
               onChange({
@@ -217,9 +217,12 @@ export function FieldValueEditor(props: Props) {
               </option>
             ))}
           </select>
+          <span className="shrink-0 text-body-sm-medium text-secondary" aria-hidden="true">
+            +
+          </span>
           <Input
             type="number"
-            className="w-20"
+            className="w-16 shrink-0"
             value={String(value.offset.amount)}
             onChange={(e) =>
               onChange({
@@ -229,7 +232,7 @@ export function FieldValueEditor(props: Props) {
             }
           />
           <select
-            className={`${selectClass} w-auto`}
+            className={`${selectClass} w-auto min-w-24 shrink-0`}
             value={value.offset.unit}
             onChange={(e) =>
               onChange({
