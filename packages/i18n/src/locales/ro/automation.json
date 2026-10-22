@@ -133,8 +133,29 @@
         "delete_only_action": "Dezactivează automatizarea înainte de a-i șterge singura acțiune."
       },
       "create_work_item": {
-        "name_placeholder": "Titlul work item (opțional)",
-        "project_placeholder": "Selectați un proiect"
+        "name_placeholder": "Titlul work item",
+        "project_placeholder": "Selectați un proiect",
+        "name_label": "Titlu",
+        "name_required": "Titlul este obligatoriu pentru a crea un work item.",
+        "project_required": "Selectați un proiect pentru a crea un work item.",
+        "add_property": "Adăugați o proprietate…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Valoare fixă",
+          "from_source": "Din work item-ul sursă",
+          "relative_date": "Dată relativă"
+        },
+        "base": {
+          "now": "Astăzi",
+          "source_start_date": "Data de început a sursei",
+          "source_target_date": "Termenul sursei"
+        },
+        "unit": {
+          "days": "zile",
+          "weeks": "săptămâni",
+          "months": "luni"
+        }
       }
     },
     "conjunctions": {

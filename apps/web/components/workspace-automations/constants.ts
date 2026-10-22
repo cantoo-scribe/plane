@@ -7,7 +7,11 @@
 import type {
   TWorkspaceAutomationActionType,
   TWorkspaceAutomationChangeableProperty,
+  TWorkspaceAutomationCreateFieldKey,
   TWorkspaceAutomationConditionField,
+  TWorkspaceAutomationRelativeDateBase,
+  TWorkspaceAutomationRelativeDateUnit,
+  TWorkspaceAutomationSourceField,
   TWorkspaceAutomationTriggerType,
 } from "@plane/types";
 
@@ -61,3 +65,61 @@ export const CHANGEABLE_PROPERTY_OPTIONS: {
 export const PRIORITY_OPTIONS = ["urgent", "high", "medium", "low", "none"] as const;
 
 export const ALL_PROJECTS_VALUE = "__all__";
+
+export const CREATE_WORK_ITEM_FIELD_OPTIONS: {
+  value: TWorkspaceAutomationCreateFieldKey;
+  labelKey: string;
+  isDate?: boolean;
+}[] = [
+  { value: "priority", labelKey: "automations.condition.fields.priority" },
+  { value: "state_id", labelKey: "automations.condition.fields.state" },
+  { value: "assignee_ids", labelKey: "automations.condition.fields.assignee" },
+  { value: "label_ids", labelKey: "automations.condition.fields.label" },
+  { value: "start_date", labelKey: "start_date", isDate: true },
+  { value: "target_date", labelKey: "due_date", isDate: true },
+];
+
+export const SOURCE_FIELD_OPTIONS: {
+  value: TWorkspaceAutomationSourceField;
+  labelKey: string;
+}[] = [
+  { value: "name", labelKey: "common.name" },
+  { value: "priority", labelKey: "automations.condition.fields.priority" },
+  { value: "state_id", labelKey: "automations.condition.fields.state" },
+  { value: "assignee_ids", labelKey: "automations.condition.fields.assignee" },
+  { value: "label_ids", labelKey: "automations.condition.fields.label" },
+  { value: "start_date", labelKey: "start_date" },
+  { value: "target_date", labelKey: "due_date" },
+];
+
+export const RELATIVE_DATE_BASE_OPTIONS: {
+  value: TWorkspaceAutomationRelativeDateBase;
+  labelKey: string;
+}[] = [
+  { value: "now", labelKey: "automations.action.field_value.base.now" },
+  { value: "source.start_date", labelKey: "automations.action.field_value.base.source_start_date" },
+  { value: "source.target_date", labelKey: "automations.action.field_value.base.source_target_date" },
+];
+
+export const RELATIVE_DATE_UNIT_OPTIONS: {
+  value: TWorkspaceAutomationRelativeDateUnit;
+  labelKey: string;
+}[] = [
+  { value: "days", labelKey: "automations.action.field_value.unit.days" },
+  { value: "weeks", labelKey: "automations.action.field_value.unit.weeks" },
+  { value: "months", labelKey: "automations.action.field_value.unit.months" },
+];
+
+/** Compatible source fields when copying into a create-work-item property. */
+export const SOURCE_FIELDS_FOR_TARGET: Record<
+  TWorkspaceAutomationCreateFieldKey | "name",
+  TWorkspaceAutomationSourceField[]
+> = {
+  name: ["name"],
+  priority: ["priority"],
+  state_id: ["state_id"],
+  assignee_ids: ["assignee_ids"],
+  label_ids: ["label_ids"],
+  start_date: ["start_date", "target_date"],
+  target_date: ["start_date", "target_date"],
+};

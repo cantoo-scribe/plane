@@ -4,10 +4,12 @@
 
 # Python imports
 import json
+from datetime import date, datetime, timedelta
 from typing import Any
 
 # Third party imports
 from celery import shared_task
+from dateutil.relativedelta import relativedelta
 
 # Django imports
 from django.db import transaction
@@ -19,6 +21,7 @@ from plane.db.models import (
     Issue,
     IssueAssignee,
     IssueComment,
+    IssueLabel,
     Project,
     State,
     WorkspaceAutomation,
@@ -312,6 +315,134 @@ def _run_add_comment(issue: Issue, config: dict, actor_id: str) -> None:
     )
 
 
+SOURCE_FIELDS = {
+    "name",
+    "priority",
+    "state_id",
+    "assignee_ids",
+    "label_ids",
+    "start_date",
+    "target_date",
+}
+CREATE_WORK_ITEM_FIELD_KEYS = {
+    "priority",
+    "state_id",
+    "assignee_ids",
+    "label_ids",
+    "start_date",
+    "target_date",
+}
+DATE_FIELD_KEYS = {"start_date", "target_date"}
+RELATIVE_DATE_UNITS = {"days", "weeks", "months"}
+RELATIVE_DATE_BASES = {"now", "source.start_date", "source.target_date"}
+
+
+def _as_date(value: Any) -> date | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value[:10])
+        except ValueError:
+            return None
+    return None
+
+
+def _read_source_field(issue: Issue, field: str) -> Any:
+    if field == "name":
+        return issue.name
+    if field == "priority":
+        return issue.priority
+    if field == "state_id":
+        return str(issue.state_id) if issue.state_id else None
+    if field == "assignee_ids":
+        return [str(assignee_id) for assignee_id in issue.assignees.values_list("id", flat=True)]
+    if field == "label_ids":
+        return [str(label_id) for label_id in issue.labels.values_list("id", flat=True)]
+    if field == "start_date":
+        return str(issue.start_date) if issue.start_date else None
+    if field == "target_date":
+        return str(issue.target_date) if issue.target_date else None
+    raise ValueError(f"Unsupported source field: {field}")
+
+
+def _resolve_relative_date(spec: dict, issue: Issue) -> str | None:
+    base = spec.get("base") or "now"
+    offset = spec.get("offset") or {}
+    if base not in RELATIVE_DATE_BASES:
+        raise ValueError(f"Invalid relative_date base: {base}")
+
+    unit = offset.get("unit") or "days"
+    if unit not in RELATIVE_DATE_UNITS:
+        raise ValueError(f"Invalid relative_date unit: {unit}")
+
+    try:
+        amount = int(offset.get("amount", 0))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("relative_date offset.amount must be an integer") from exc
+
+    if base == "now":
+        base_date = timezone.now().date()
+    elif base == "source.start_date":
+        base_date = _as_date(issue.start_date)
+    else:
+        base_date = _as_date(issue.target_date)
+
+    if base_date is None:
+        return None
+
+    if unit == "days":
+        resolved = base_date + timedelta(days=amount)
+    elif unit == "weeks":
+        resolved = base_date + timedelta(weeks=amount)
+    else:
+        resolved = base_date + relativedelta(months=amount)
+
+    return resolved.isoformat()
+
+
+def resolve_field_value(spec: Any, issue: Issue, *, expect_date: bool = False) -> Any:
+    """Resolve a FieldValue spec against the source issue.
+
+    Accepts legacy plain strings/lists as static values for backward compatibility.
+    """
+    if spec is None:
+        return None
+
+    if not isinstance(spec, dict) or "mode" not in spec:
+        return spec
+
+    mode = spec.get("mode")
+    if mode == "static":
+        return spec.get("value")
+
+    if mode == "from_source":
+        field = spec.get("field")
+        if field not in SOURCE_FIELDS:
+            raise ValueError(f"Invalid from_source field: {field}")
+        return _read_source_field(issue, field)
+
+    if mode == "relative_date":
+        if not expect_date:
+            raise ValueError("relative_date mode is only valid for date fields")
+        return _resolve_relative_date(spec, issue)
+
+    raise ValueError(f"Unsupported field value mode: {mode}")
+
+
+def _normalize_name_spec(config: dict) -> dict:
+    name_spec = config.get("name")
+    if isinstance(name_spec, str):
+        return {"mode": "static", "value": name_spec}
+    if isinstance(name_spec, dict) and name_spec.get("mode"):
+        return name_spec
+    return {"mode": "static", "value": ""}
+
+
 def _run_create_work_item(issue: Issue, config: dict, actor_id: str) -> None:
     project_id = config.get("project_id") or str(issue.project_id)
     if not is_valid_uuid(str(project_id)):
@@ -321,10 +452,45 @@ def _run_create_work_item(issue: Issue, config: dict, actor_id: str) -> None:
     if not project:
         raise ValueError("Project not found for create_work_item action")
 
-    name = (config.get("name") or "").strip() or f"Follow-up: {issue.name}"
+    name_spec = _normalize_name_spec(config)
+    name = resolve_field_value(name_spec, issue)
+    name = (str(name).strip() if name is not None else "")
+    if not name:
+        raise ValueError("name is required for create_work_item action")
+
     issue_type_id = config.get("issue_type_id")
     if issue_type_id and not is_valid_uuid(str(issue_type_id)):
         issue_type_id = None
+
+    fields = config.get("fields") or {}
+    if not isinstance(fields, dict):
+        raise ValueError("fields must be an object for create_work_item")
+
+    resolved: dict[str, Any] = {}
+    for field_key, field_spec in fields.items():
+        if field_key not in CREATE_WORK_ITEM_FIELD_KEYS:
+            continue
+        resolved[field_key] = resolve_field_value(
+            field_spec,
+            issue,
+            expect_date=field_key in DATE_FIELD_KEYS,
+        )
+
+    priority = resolved.get("priority")
+    if priority is None:
+        priority = "none"
+
+    state_id = resolved.get("state_id")
+    if state_id and not is_valid_uuid(str(state_id)):
+        state_id = None
+    if state_id:
+        state = State.objects.filter(pk=state_id, project_id=project.id).first()
+        if not state:
+            raise ValueError("State not found in target project for create_work_item")
+        state_id = state.id
+
+    start_date = _as_date(resolved.get("start_date"))
+    target_date = _as_date(resolved.get("target_date"))
 
     new_issue = Issue(
         name=name[:255],
@@ -332,11 +498,56 @@ def _run_create_work_item(issue: Issue, config: dict, actor_id: str) -> None:
         workspace_id=project.workspace_id,
         created_by_id=actor_id,
         updated_by_id=actor_id,
-        priority=config.get("priority") or "none",
+        priority=priority or "none",
+        state_id=state_id,
+        start_date=start_date,
+        target_date=target_date,
     )
     if issue_type_id:
         new_issue.type_id = issue_type_id
     new_issue.save()
+
+    assignee_ids = resolved.get("assignee_ids") or []
+    if isinstance(assignee_ids, str):
+        assignee_ids = [assignee_ids]
+    assignee_ids = [str(aid) for aid in assignee_ids if is_valid_uuid(str(aid))]
+    if assignee_ids:
+        IssueAssignee.objects.bulk_create(
+            [
+                IssueAssignee(
+                    issue=new_issue,
+                    assignee_id=assignee_id,
+                    project_id=project.id,
+                    workspace_id=project.workspace_id,
+                    created_by_id=actor_id,
+                    updated_by_id=actor_id,
+                )
+                for assignee_id in assignee_ids
+            ],
+            batch_size=10,
+            ignore_conflicts=True,
+        )
+
+    label_ids = resolved.get("label_ids") or []
+    if isinstance(label_ids, str):
+        label_ids = [label_ids]
+    label_ids = [str(lid) for lid in label_ids if is_valid_uuid(str(lid))]
+    if label_ids:
+        IssueLabel.objects.bulk_create(
+            [
+                IssueLabel(
+                    issue=new_issue,
+                    label_id=label_id,
+                    project_id=project.id,
+                    workspace_id=project.workspace_id,
+                    created_by_id=actor_id,
+                    updated_by_id=actor_id,
+                )
+                for label_id in label_ids
+            ],
+            batch_size=10,
+            ignore_conflicts=True,
+        )
 
     issue_activity.delay(
         type="issue.activity.created",

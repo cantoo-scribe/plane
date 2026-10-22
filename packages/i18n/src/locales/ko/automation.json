@@ -133,8 +133,29 @@
         "delete_only_action": "유일한 액션을 삭제하기 전에 자동화를 비활성화하세요."
       },
       "create_work_item": {
-        "name_placeholder": "Work item 제목(선택 사항)",
-        "project_placeholder": "프로젝트 선택"
+        "name_placeholder": "Work item 제목",
+        "project_placeholder": "프로젝트 선택",
+        "name_label": "제목",
+        "name_required": "Work item을 만들려면 제목이 필요합니다.",
+        "project_required": "Work item을 만들려면 프로젝트를 선택하세요.",
+        "add_property": "속성 추가…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "고정 값",
+          "from_source": "원본 Work item에서",
+          "relative_date": "상대 날짜"
+        },
+        "base": {
+          "now": "오늘",
+          "source_start_date": "원본 시작일",
+          "source_target_date": "원본 마감일"
+        },
+        "unit": {
+          "days": "일",
+          "weeks": "주",
+          "months": "개월"
+        }
       }
     },
     "conjunctions": {

@@ -133,8 +133,29 @@
         "delete_only_action": "在删除唯一操作之前，请先禁用自动化。"
       },
       "create_work_item": {
-        "name_placeholder": "Work item 标题（可选）",
-        "project_placeholder": "选择项目"
+        "name_placeholder": "Work item 标题",
+        "project_placeholder": "选择项目",
+        "name_label": "标题",
+        "name_required": "创建 Work item 时必须填写标题。",
+        "project_required": "请选择项目以创建 Work item。",
+        "add_property": "添加属性…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "固定值",
+          "from_source": "来自源 Work item",
+          "relative_date": "相对日期"
+        },
+        "base": {
+          "now": "今天",
+          "source_start_date": "源开始日期",
+          "source_target_date": "源截止日期"
+        },
+        "unit": {
+          "days": "天",
+          "weeks": "周",
+          "months": "月"
+        }
       }
     },
     "conjunctions": {

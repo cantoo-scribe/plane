@@ -133,8 +133,29 @@
         "delete_only_action": "Wyłącz automatyzację przed usunięciem jej jedynej akcji."
       },
       "create_work_item": {
-        "name_placeholder": "Tytuł work item (opcjonalnie)",
-        "project_placeholder": "Wybierz projekt"
+        "name_placeholder": "Tytuł work item",
+        "project_placeholder": "Wybierz projekt",
+        "name_label": "Tytuł",
+        "name_required": "Tytuł jest wymagany, aby utworzyć work item.",
+        "project_required": "Wybierz projekt, aby utworzyć work item.",
+        "add_property": "Dodaj właściwość…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Stała wartość",
+          "from_source": "Z źródłowego work item",
+          "relative_date": "Data względna"
+        },
+        "base": {
+          "now": "Dziś",
+          "source_start_date": "Data rozpoczęcia źródła",
+          "source_target_date": "Termin źródła"
+        },
+        "unit": {
+          "days": "dni",
+          "weeks": "tygodnie",
+          "months": "miesiące"
+        }
       }
     },
     "conjunctions": {

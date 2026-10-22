@@ -32,6 +32,38 @@ export type TWorkspaceAutomationActionType =
 
 export type TWorkspaceAutomationChangeableProperty = "priority" | "state_id" | "name" | "target_date" | "assignee_ids";
 
+/** Native fields that can be set when creating a work item via automation. */
+export type TWorkspaceAutomationCreateFieldKey =
+  | "priority"
+  | "state_id"
+  | "assignee_ids"
+  | "label_ids"
+  | "start_date"
+  | "target_date";
+
+/** Fields readable from the source work item for copy / relative-date bases. */
+export type TWorkspaceAutomationSourceField =
+  | "name"
+  | "priority"
+  | "state_id"
+  | "assignee_ids"
+  | "label_ids"
+  | "start_date"
+  | "target_date";
+
+export type TWorkspaceAutomationRelativeDateBase = "now" | "source.start_date" | "source.target_date";
+
+export type TWorkspaceAutomationRelativeDateUnit = "days" | "weeks" | "months";
+
+export type TWorkspaceAutomationFieldValue =
+  | { mode: "static"; value: string | string[] | null }
+  | { mode: "from_source"; field: TWorkspaceAutomationSourceField }
+  | {
+      mode: "relative_date";
+      base: TWorkspaceAutomationRelativeDateBase;
+      offset: { amount: number; unit: TWorkspaceAutomationRelativeDateUnit };
+    };
+
 export type TWorkspaceAutomationRunStatus = "success" | "failed" | "skipped";
 
 export interface IWorkspaceAutomationCondition {

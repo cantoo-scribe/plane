@@ -133,8 +133,29 @@
         "delete_only_action": "Disable the automation before deleting its only action."
       },
       "create_work_item": {
-        "name_placeholder": "Work item-ის სათაური (არასავალდებულო)",
-        "project_placeholder": "აირჩიეთ პროექტი"
+        "name_placeholder": "Work item-ის სათაური",
+        "project_placeholder": "აირჩიეთ პროექტი",
+        "name_label": "სათაური",
+        "name_required": "Work item-ის შესაქმნელად სათაური სავალდებულოა.",
+        "project_required": "Work item-ის შესაქმნელად აირჩიეთ პროექტი.",
+        "add_property": "თვისების დამატება…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "ფიქსირებული მნიშვნელობა",
+          "from_source": "წყარო Work item-იდან",
+          "relative_date": "შედარებითი თარიღი"
+        },
+        "base": {
+          "now": "დღეს",
+          "source_start_date": "წყაროს დაწყების თარიღი",
+          "source_target_date": "წყაროს ვადა"
+        },
+        "unit": {
+          "days": "დღე",
+          "weeks": "კვირა",
+          "months": "თვე"
+        }
       }
     },
     "conjunctions": {

@@ -5,6 +5,7 @@
  */
 
 export * from "./constants";
+export * from "./field-value-editor";
 export * from "./form";
 export * from "./list";
 export * from "./list-item";

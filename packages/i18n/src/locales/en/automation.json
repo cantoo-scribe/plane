@@ -105,8 +105,12 @@
         "create_work_item": "Create work item"
       },
       "create_work_item": {
-        "name_placeholder": "Work item title (optional)",
-        "project_placeholder": "Select a project"
+        "name_placeholder": "Work item title",
+        "project_placeholder": "Select a project",
+        "name_label": "Title",
+        "name_required": "Title is required to create a work item.",
+        "project_required": "Select a project to create a work item.",
+        "add_property": "Add property…"
       },
       "configuration": {
         "label": "Configuration",
@@ -135,6 +139,23 @@
       },
       "validation": {
         "delete_only_action": "Disable the automation before deleting its only action."
+      },
+      "field_value": {
+        "mode": {
+          "static": "Fixed value",
+          "from_source": "From source work item",
+          "relative_date": "Relative date"
+        },
+        "base": {
+          "now": "Today",
+          "source_start_date": "Source start date",
+          "source_target_date": "Source due date"
+        },
+        "unit": {
+          "days": "days",
+          "weeks": "weeks",
+          "months": "months"
+        }
       }
     },
     "conjunctions": {

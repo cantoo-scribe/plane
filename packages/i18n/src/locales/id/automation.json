@@ -133,8 +133,29 @@
         "delete_only_action": "Nonaktifkan otomatisasi sebelum menghapus satu-satunya aksi."
       },
       "create_work_item": {
-        "name_placeholder": "Judul work item (opsional)",
-        "project_placeholder": "Pilih proyek"
+        "name_placeholder": "Judul work item",
+        "project_placeholder": "Pilih proyek",
+        "name_label": "Judul",
+        "name_required": "Judul wajib diisi untuk membuat work item.",
+        "project_required": "Pilih proyek untuk membuat work item.",
+        "add_property": "Tambah properti…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Nilai tetap",
+          "from_source": "Dari work item sumber",
+          "relative_date": "Tanggal relatif"
+        },
+        "base": {
+          "now": "Hari ini",
+          "source_start_date": "Tanggal mulai sumber",
+          "source_target_date": "Tanggal jatuh tempo sumber"
+        },
+        "unit": {
+          "days": "hari",
+          "weeks": "minggu",
+          "months": "bulan"
+        }
       }
     },
     "conjunctions": {

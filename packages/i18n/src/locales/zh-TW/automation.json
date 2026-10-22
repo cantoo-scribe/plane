@@ -133,8 +133,29 @@
         "delete_only_action": "在刪除唯一動作之前，請先停用自動化。"
       },
       "create_work_item": {
-        "name_placeholder": "Work item 標題（選填）",
-        "project_placeholder": "選取專案"
+        "name_placeholder": "Work item 標題",
+        "project_placeholder": "選取專案",
+        "name_label": "標題",
+        "name_required": "建立 Work item 時必須填寫標題。",
+        "project_required": "請選取專案以建立 Work item。",
+        "add_property": "新增屬性…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "固定值",
+          "from_source": "來自來源 Work item",
+          "relative_date": "相對日期"
+        },
+        "base": {
+          "now": "今天",
+          "source_start_date": "來源開始日期",
+          "source_target_date": "來源截止日期"
+        },
+        "unit": {
+          "days": "天",
+          "weeks": "週",
+          "months": "月"
+        }
       }
     },
     "conjunctions": {

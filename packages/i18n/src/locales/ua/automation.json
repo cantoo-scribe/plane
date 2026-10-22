@@ -133,8 +133,29 @@
         "delete_only_action": "Вимкніть автоматизацію перед видаленням її єдиної дії."
       },
       "create_work_item": {
-        "name_placeholder": "Назва work item (необов’язково)",
-        "project_placeholder": "Виберіть проєкт"
+        "name_placeholder": "Назва work item",
+        "project_placeholder": "Виберіть проєкт",
+        "name_label": "Назва",
+        "name_required": "Для створення work item потрібна назва.",
+        "project_required": "Виберіть проєкт, щоб створити work item.",
+        "add_property": "Додати властивість…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Фіксоване значення",
+          "from_source": "З вихідного work item",
+          "relative_date": "Відносна дата"
+        },
+        "base": {
+          "now": "Сьогодні",
+          "source_start_date": "Дата початку джерела",
+          "source_target_date": "Термін джерела"
+        },
+        "unit": {
+          "days": "дні",
+          "weeks": "тижні",
+          "months": "місяці"
+        }
       }
     },
     "conjunctions": {

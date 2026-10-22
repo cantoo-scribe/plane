@@ -133,8 +133,29 @@
         "delete_only_action": "Tek eylemini silmeden önce otomasyonu devre dışı bırakın."
       },
       "create_work_item": {
-        "name_placeholder": "Work item başlığı (isteğe bağlı)",
-        "project_placeholder": "Bir proje seçin"
+        "name_placeholder": "Work item başlığı",
+        "project_placeholder": "Bir proje seçin",
+        "name_label": "Başlık",
+        "name_required": "Work item oluşturmak için başlık zorunludur.",
+        "project_required": "Work item oluşturmak için bir proje seçin.",
+        "add_property": "Özellik ekle…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Sabit değer",
+          "from_source": "Kaynak work item'dan",
+          "relative_date": "Göreli tarih"
+        },
+        "base": {
+          "now": "Bugün",
+          "source_start_date": "Kaynak başlangıç tarihi",
+          "source_target_date": "Kaynak bitiş tarihi"
+        },
+        "unit": {
+          "days": "gün",
+          "weeks": "hafta",
+          "months": "ay"
+        }
       }
     },
     "conjunctions": {

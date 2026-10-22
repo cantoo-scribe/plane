@@ -133,8 +133,29 @@
         "delete_only_action": "Отключите автоматизацию перед удалением её единственного действия."
       },
       "create_work_item": {
-        "name_placeholder": "Название work item (необязательно)",
-        "project_placeholder": "Выберите проект"
+        "name_placeholder": "Название work item",
+        "project_placeholder": "Выберите проект",
+        "name_label": "Название",
+        "name_required": "Для создания work item требуется название.",
+        "project_required": "Выберите проект, чтобы создать work item.",
+        "add_property": "Добавить свойство…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Фиксированное значение",
+          "from_source": "Из исходного work item",
+          "relative_date": "Относительная дата"
+        },
+        "base": {
+          "now": "Сегодня",
+          "source_start_date": "Дата начала источника",
+          "source_target_date": "Срок источника"
+        },
+        "unit": {
+          "days": "дни",
+          "weeks": "недели",
+          "months": "месяцы"
+        }
       }
     },
     "conjunctions": {

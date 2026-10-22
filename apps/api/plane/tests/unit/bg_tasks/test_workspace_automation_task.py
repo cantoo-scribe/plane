@@ -3,15 +3,19 @@
 # See the LICENSE file for details.
 
 import json
-from unittest.mock import patch
+from datetime import date, timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
+from django.utils import timezone
 
 from plane.bgtasks.workspace_automation_task import (
     detect_trigger_types,
     evaluate_conditions,
     evaluate_workspace_automations,
     matches_trigger_config,
+    resolve_field_value,
+    _run_create_work_item,
 )
 from plane.db.models import (
     Issue,
@@ -307,4 +311,96 @@ class TestEvaluateWorkspaceAutomations:
         )
 
         assert WorkspaceAutomationRun.objects.count() == 0
+        mock_activity.assert_not_called()
+
+
+@pytest.mark.unit
+class TestResolveFieldValue:
+    def test_legacy_string_is_static(self):
+        issue = MagicMock()
+        assert resolve_field_value("hello", issue) == "hello"
+
+    def test_static_mode(self):
+        issue = MagicMock()
+        assert resolve_field_value({"mode": "static", "value": "high"}, issue) == "high"
+
+    def test_from_source_name(self):
+        issue = MagicMock()
+        issue.name = "Source title"
+        assert resolve_field_value({"mode": "from_source", "field": "name"}, issue) == "Source title"
+
+    def test_relative_date_from_now(self):
+        issue = MagicMock()
+        result = resolve_field_value(
+            {"mode": "relative_date", "base": "now", "offset": {"amount": 2, "unit": "weeks"}},
+            issue,
+            expect_date=True,
+        )
+        expected = (timezone.now().date() + timedelta(weeks=2)).isoformat()
+        assert result == expected
+
+    def test_relative_date_from_source_target(self):
+        issue = MagicMock()
+        issue.target_date = date(2026, 1, 10)
+        result = resolve_field_value(
+            {
+                "mode": "relative_date",
+                "base": "source.target_date",
+                "offset": {"amount": 3, "unit": "days"},
+            },
+            issue,
+            expect_date=True,
+        )
+        assert result == "2026-01-13"
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+class TestCreateWorkItemAction:
+    @patch("plane.bgtasks.workspace_automation_task.issue_activity.delay")
+    def test_creates_with_resolved_fields(self, mock_activity):
+        user = UserFactory()
+        workspace = WorkspaceFactory(owner=user)
+        WorkspaceMemberFactory(workspace=workspace, member=user)
+        project = ProjectFactory(workspace=workspace, created_by=user)
+        source = _make_issue(workspace, project, user, priority="urgent")
+        source.target_date = date(2026, 3, 1)
+        source.save(update_fields=["target_date"])
+
+        _run_create_work_item(
+            source,
+            {
+                "project_id": str(project.id),
+                "name": {"mode": "static", "value": "Follow-up task"},
+                "fields": {
+                    "priority": {"mode": "from_source", "field": "priority"},
+                    "target_date": {
+                        "mode": "relative_date",
+                        "base": "source.target_date",
+                        "offset": {"amount": 1, "unit": "months"},
+                    },
+                },
+            },
+            str(user.id),
+        )
+
+        created = Issue.objects.exclude(pk=source.id).get()
+        assert created.name == "Follow-up task"
+        assert created.priority == "urgent"
+        assert str(created.target_date) == "2026-04-01"
+        mock_activity.assert_called()
+
+    @patch("plane.bgtasks.workspace_automation_task.issue_activity.delay")
+    def test_requires_name(self, mock_activity):
+        user = UserFactory()
+        workspace = WorkspaceFactory(owner=user)
+        project = ProjectFactory(workspace=workspace, created_by=user)
+        source = _make_issue(workspace, project, user)
+
+        with pytest.raises(ValueError, match="name is required"):
+            _run_create_work_item(
+                source,
+                {"project_id": str(project.id), "name": {"mode": "static", "value": "  "}},
+                str(user.id),
+            )
         mock_activity.assert_not_called()

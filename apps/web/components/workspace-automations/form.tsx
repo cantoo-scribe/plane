@@ -18,6 +18,8 @@ import type {
   TWorkspaceAutomationActionType,
   TWorkspaceAutomationChangeableProperty,
   TWorkspaceAutomationConditionField,
+  TWorkspaceAutomationCreateFieldKey,
+  TWorkspaceAutomationFieldValue,
   TWorkspaceAutomationForm,
   TWorkspaceAutomationTriggerType,
 } from "@plane/types";
@@ -32,8 +34,10 @@ import {
   AUTOMATION_CONDITION_FIELD_OPTIONS,
   AUTOMATION_TRIGGER_OPTIONS,
   CHANGEABLE_PROPERTY_OPTIONS,
+  CREATE_WORK_ITEM_FIELD_OPTIONS,
   PRIORITY_OPTIONS,
 } from "./constants";
+import { FieldValueEditor, normalizeFieldValue } from "./field-value-editor";
 
 type Props = {
   data?: IWorkspaceAutomation;
@@ -69,7 +73,12 @@ const defaultActionConfig = (actionType: TWorkspaceAutomationActionType): Record
     case "add_comment":
       return { comment_html: "<p></p>" };
     case "create_work_item":
-      return { project_id: "", issue_type_id: "", name: "" };
+      return {
+        project_id: "",
+        issue_type_id: "",
+        name: { mode: "static", value: "" } satisfies TWorkspaceAutomationFieldValue,
+        fields: {} as Record<string, TWorkspaceAutomationFieldValue>,
+      };
     case "change_property":
       return { property: "priority", value: "urgent" };
     default:
@@ -211,6 +220,19 @@ export const WorkspaceAutomationForm = observer(function WorkspaceAutomationForm
     if (!actions.length) {
       setError(t("automations.enable.validation.required"));
       return;
+    }
+
+    for (const actionItem of actions) {
+      if (actionItem.action_type !== "create_work_item") continue;
+      if (!actionItem.config.project_id) {
+        setError(t("automations.action.create_work_item.project_required"));
+        return;
+      }
+      const nameValue = normalizeFieldValue(actionItem.config.name, "name");
+      if (nameValue.mode === "static" && !(typeof nameValue.value === "string" && nameValue.value.trim())) {
+        setError(t("automations.action.create_work_item.name_required"));
+        return;
+      }
     }
 
     const payload: TWorkspaceAutomationForm = {
@@ -607,51 +629,143 @@ export const WorkspaceAutomationForm = observer(function WorkspaceAutomationForm
               )}
 
               {actionItem.action_type === "create_work_item" && (
-                <div className="grid gap-2 md:grid-cols-2">
-                  <select
-                    className={selectClass}
-                    value={String(actionItem.config.project_id ?? "")}
-                    onChange={(e) =>
-                      updateAction(index, {
-                        config: { ...actionItem.config, project_id: e.target.value, issue_type_id: "" },
-                      })
-                    }
-                  >
-                    <option value="">{t("automations.action.create_work_item.project_placeholder")}</option>
-                    {projects.map((project) =>
-                      project ? (
-                        <option key={project.id} value={project.id}>
-                          {project.name}
+                <div className="space-y-3">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <select
+                      className={selectClass}
+                      value={String(actionItem.config.project_id ?? "")}
+                      onChange={(e) =>
+                        updateAction(index, {
+                          config: { ...actionItem.config, project_id: e.target.value, issue_type_id: "" },
+                        })
+                      }
+                    >
+                      <option value="">{t("automations.action.create_work_item.project_placeholder")}</option>
+                      {projects.map((project) =>
+                        project ? (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ) : null
+                      )}
+                    </select>
+                    <select
+                      className={selectClass}
+                      value={String(actionItem.config.issue_type_id ?? "")}
+                      onChange={(e) =>
+                        updateAction(index, {
+                          config: { ...actionItem.config, issue_type_id: e.target.value },
+                        })
+                      }
+                    >
+                      <option value="">{t("common.default")}</option>
+                      {actionTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
                         </option>
-                      ) : null
-                    )}
-                  </select>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-body-xs-medium text-tertiary">
+                      {t("automations.action.create_work_item.name_label")}
+                    </label>
+                    <FieldValueEditor
+                      fieldKey="name"
+                      value={normalizeFieldValue(actionItem.config.name, "name")}
+                      onChange={(nextName) => updateAction(index, { config: { ...actionItem.config, name: nextName } })}
+                      states={actionStates}
+                      members={members}
+                      labels={labels}
+                    />
+                  </div>
+
+                  {Object.entries(
+                    (actionItem.config.fields as Record<string, TWorkspaceAutomationFieldValue>) || {}
+                  ).map(([fieldKey, fieldSpec]) => {
+                    const meta = CREATE_WORK_ITEM_FIELD_OPTIONS.find((option) => option.value === fieldKey);
+                    if (!meta) return null;
+                    const currentFields =
+                      (actionItem.config.fields as Record<string, TWorkspaceAutomationFieldValue>) || {};
+                    return (
+                      <div key={fieldKey} className="space-y-1 rounded-md border border-subtle bg-layer-1 p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-body-xs-medium text-tertiary">{t(meta.labelKey)}</label>
+                          <Button
+                            variant="tertiary"
+                            size="sm"
+                            type="button"
+                            label={t("common.remove")}
+                            onClick={() => {
+                              const nextFields = { ...currentFields };
+                              delete nextFields[fieldKey];
+                              updateAction(index, {
+                                config: { ...actionItem.config, fields: nextFields },
+                              });
+                            }}
+                          />
+                        </div>
+                        <FieldValueEditor
+                          fieldKey={fieldKey as TWorkspaceAutomationCreateFieldKey}
+                          value={normalizeFieldValue(fieldSpec, fieldKey as TWorkspaceAutomationCreateFieldKey)}
+                          onChange={(next) =>
+                            updateAction(index, {
+                              config: {
+                                ...actionItem.config,
+                                fields: {
+                                  ...currentFields,
+                                  [fieldKey]: next,
+                                },
+                              },
+                            })
+                          }
+                          isDate={Boolean(meta.isDate)}
+                          states={actionStates}
+                          members={members}
+                          labels={labels}
+                        />
+                      </div>
+                    );
+                  })}
+
                   <select
                     className={selectClass}
-                    value={String(actionItem.config.issue_type_id ?? "")}
-                    onChange={(e) =>
+                    value=""
+                    onChange={(e) => {
+                      const fieldKey = e.target.value as TWorkspaceAutomationCreateFieldKey;
+                      if (!fieldKey) return;
+                      const existing =
+                        (actionItem.config.fields as Record<string, TWorkspaceAutomationFieldValue> | undefined) ?? {};
+                      if (existing[fieldKey]) return;
+                      const meta = CREATE_WORK_ITEM_FIELD_OPTIONS.find((option) => option.value === fieldKey);
                       updateAction(index, {
-                        config: { ...actionItem.config, issue_type_id: e.target.value },
-                      })
-                    }
+                        config: {
+                          ...actionItem.config,
+                          fields: {
+                            ...existing,
+                            [fieldKey]: normalizeFieldValue(
+                              meta?.isDate
+                                ? { mode: "relative_date", base: "now", offset: { amount: 1, unit: "weeks" } }
+                                : undefined,
+                              fieldKey
+                            ),
+                          },
+                        },
+                      });
+                    }}
                   >
-                    <option value="">{t("common.default")}</option>
-                    {actionTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
+                    <option value="">{t("automations.action.create_work_item.add_property")}</option>
+                    {CREATE_WORK_ITEM_FIELD_OPTIONS.filter((option) => {
+                      const existing =
+                        (actionItem.config.fields as Record<string, TWorkspaceAutomationFieldValue> | undefined) ?? {};
+                      return !existing[option.value];
+                    }).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {t(option.labelKey)}
                       </option>
                     ))}
                   </select>
-                  <Input
-                    className="md:col-span-2"
-                    value={String(actionItem.config.name ?? "")}
-                    onChange={(e) =>
-                      updateAction(index, {
-                        config: { ...actionItem.config, name: e.target.value },
-                      })
-                    }
-                    placeholder={t("automations.action.create_work_item.name_placeholder")}
-                  />
                 </div>
               )}
 

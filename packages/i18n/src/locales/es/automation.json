@@ -133,8 +133,29 @@
         "delete_only_action": "Desactiva la automatización antes de eliminar su única acción."
       },
       "create_work_item": {
-        "name_placeholder": "Título del work item (opcional)",
-        "project_placeholder": "Seleccionar un proyecto"
+        "name_placeholder": "Título del work item",
+        "project_placeholder": "Seleccionar un proyecto",
+        "name_label": "Título",
+        "name_required": "El título es obligatorio para crear un work item.",
+        "project_required": "Selecciona un proyecto para crear un work item.",
+        "add_property": "Añadir propiedad…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Valor fijo",
+          "from_source": "Del work item de origen",
+          "relative_date": "Fecha relativa"
+        },
+        "base": {
+          "now": "Hoy",
+          "source_start_date": "Fecha de inicio de origen",
+          "source_target_date": "Fecha de vencimiento de origen"
+        },
+        "unit": {
+          "days": "días",
+          "weeks": "semanas",
+          "months": "meses"
+        }
       }
     },
     "conjunctions": {

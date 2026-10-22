@@ -133,8 +133,29 @@
         "delete_only_action": "唯一のアクションを削除する前に自動化を無効にしてください。"
       },
       "create_work_item": {
-        "name_placeholder": "Work item のタイトル（任意）",
-        "project_placeholder": "プロジェクトを選択"
+        "name_placeholder": "Work item のタイトル",
+        "project_placeholder": "プロジェクトを選択",
+        "name_label": "タイトル",
+        "name_required": "Work item を作成するにはタイトルが必要です。",
+        "project_required": "Work item を作成するにはプロジェクトを選択してください。",
+        "add_property": "プロパティを追加…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "固定値",
+          "from_source": "元の Work item から",
+          "relative_date": "相対日付"
+        },
+        "base": {
+          "now": "今日",
+          "source_start_date": "元の開始日",
+          "source_target_date": "元の期限"
+        },
+        "unit": {
+          "days": "日",
+          "weeks": "週",
+          "months": "月"
+        }
       }
     },
     "conjunctions": {

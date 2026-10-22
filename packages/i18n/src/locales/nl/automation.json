@@ -133,8 +133,29 @@
         "delete_only_action": "Schakel de automatisering uit voordat je de enige actie verwijdert."
       },
       "create_work_item": {
-        "name_placeholder": "Titel van work item (optioneel)",
-        "project_placeholder": "Selecteer een project"
+        "name_placeholder": "Titel van work item",
+        "project_placeholder": "Selecteer een project",
+        "name_label": "Titel",
+        "name_required": "Titel is verplicht om een work item te maken.",
+        "project_required": "Selecteer een project om een work item te maken.",
+        "add_property": "Eigenschap toevoegen…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Vaste waarde",
+          "from_source": "Van bron-work-item",
+          "relative_date": "Relatieve datum"
+        },
+        "base": {
+          "now": "Vandaag",
+          "source_start_date": "Startdatum van bron",
+          "source_target_date": "Vervaldatum van bron"
+        },
+        "unit": {
+          "days": "dagen",
+          "weeks": "weken",
+          "months": "maanden"
+        }
       }
     },
     "conjunctions": {

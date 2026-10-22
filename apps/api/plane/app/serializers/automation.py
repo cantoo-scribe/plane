@@ -21,6 +21,79 @@ from plane.db.models.automation import (
 )
 
 CHANGEABLE_PROPERTIES = {"priority", "state_id", "name", "target_date", "assignee_ids"}
+CREATE_WORK_ITEM_FIELD_KEYS = {
+    "priority",
+    "state_id",
+    "assignee_ids",
+    "label_ids",
+    "start_date",
+    "target_date",
+}
+SOURCE_FIELDS = {
+    "name",
+    "priority",
+    "state_id",
+    "assignee_ids",
+    "label_ids",
+    "start_date",
+    "target_date",
+}
+DATE_FIELD_KEYS = {"start_date", "target_date"}
+RELATIVE_DATE_UNITS = {"days", "weeks", "months"}
+RELATIVE_DATE_BASES = {"now", "source.start_date", "source.target_date"}
+FIELD_VALUE_MODES = {"static", "from_source", "relative_date"}
+
+
+def _validate_field_value(spec, *, field_key: str | None = None, required: bool = False):
+    """Validate a FieldValue spec. Plain strings/lists are accepted as legacy static values."""
+    if spec is None:
+        if required:
+            raise serializers.ValidationError("Value is required.")
+        return
+
+    if not isinstance(spec, dict) or "mode" not in spec:
+        if required and isinstance(spec, str) and not spec.strip():
+            raise serializers.ValidationError("Value is required.")
+        return
+
+    mode = spec.get("mode")
+    if mode not in FIELD_VALUE_MODES:
+        raise serializers.ValidationError(f"Invalid mode. Must be one of: {', '.join(sorted(FIELD_VALUE_MODES))}.")
+
+    if mode == "static":
+        value = spec.get("value")
+        if required and (value is None or (isinstance(value, str) and not value.strip())):
+            raise serializers.ValidationError("Static value is required.")
+        return
+
+    if mode == "from_source":
+        field = spec.get("field")
+        if field not in SOURCE_FIELDS:
+            raise serializers.ValidationError(
+                f"from_source.field must be one of: {', '.join(sorted(SOURCE_FIELDS))}."
+            )
+        return
+
+    if mode == "relative_date":
+        if field_key and field_key not in DATE_FIELD_KEYS:
+            raise serializers.ValidationError("relative_date mode is only valid for date fields.")
+        base = spec.get("base") or "now"
+        if base not in RELATIVE_DATE_BASES:
+            raise serializers.ValidationError(
+                f"relative_date.base must be one of: {', '.join(sorted(RELATIVE_DATE_BASES))}."
+            )
+        offset = spec.get("offset") or {}
+        if not isinstance(offset, dict):
+            raise serializers.ValidationError("relative_date.offset must be an object.")
+        unit = offset.get("unit") or "days"
+        if unit not in RELATIVE_DATE_UNITS:
+            raise serializers.ValidationError(
+                f"relative_date.offset.unit must be one of: {', '.join(sorted(RELATIVE_DATE_UNITS))}."
+            )
+        try:
+            int(offset.get("amount", 0))
+        except (TypeError, ValueError) as exc:
+            raise serializers.ValidationError("relative_date.offset.amount must be an integer.") from exc
 
 
 class WorkspaceAutomationConditionSerializer(DynamicBaseSerializer):
@@ -70,6 +143,30 @@ class WorkspaceAutomationActionSerializer(DynamicBaseSerializer):
         elif action_type == WorkspaceAutomationActionType.CREATE_WORK_ITEM:
             if not config.get("project_id"):
                 raise serializers.ValidationError({"config": "project_id is required for create_work_item."})
+            try:
+                _validate_field_value(config.get("name"), field_key="name", required=True)
+            except serializers.ValidationError as exc:
+                detail = exc.detail[0] if isinstance(exc.detail, list) else exc.detail
+                raise serializers.ValidationError({"config": f"name: {detail}"}) from exc
+
+            fields = config.get("fields") or {}
+            if not isinstance(fields, dict):
+                raise serializers.ValidationError({"config": "fields must be an object."})
+            for field_key, field_spec in fields.items():
+                if field_key not in CREATE_WORK_ITEM_FIELD_KEYS:
+                    raise serializers.ValidationError(
+                        {
+                            "config": (
+                                f"Unsupported create field '{field_key}'. "
+                                f"Allowed: {', '.join(sorted(CREATE_WORK_ITEM_FIELD_KEYS))}."
+                            )
+                        }
+                    )
+                try:
+                    _validate_field_value(field_spec, field_key=field_key, required=False)
+                except serializers.ValidationError as exc:
+                    detail = exc.detail[0] if isinstance(exc.detail, list) else exc.detail
+                    raise serializers.ValidationError({"config": f"fields.{field_key}: {detail}"}) from exc
         elif action_type == WorkspaceAutomationActionType.CHANGE_PROPERTY:
             property_key = config.get("property")
             if property_key not in CHANGEABLE_PROPERTIES:

@@ -133,8 +133,29 @@
         "delete_only_action": "Pred odstránením jedinej akcie vypnite automatizáciu."
       },
       "create_work_item": {
-        "name_placeholder": "Názov work item (voliteľné)",
-        "project_placeholder": "Vyberte projekt"
+        "name_placeholder": "Názov work item",
+        "project_placeholder": "Vyberte projekt",
+        "name_label": "Názov",
+        "name_required": "Názov je povinný na vytvorenie work item.",
+        "project_required": "Vyberte projekt na vytvorenie work item.",
+        "add_property": "Pridať vlastnosť…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Pevná hodnota",
+          "from_source": "Zo zdrojového work item",
+          "relative_date": "Relatívny dátum"
+        },
+        "base": {
+          "now": "Dnes",
+          "source_start_date": "Dátum začiatku zdroja",
+          "source_target_date": "Termín zdroja"
+        },
+        "unit": {
+          "days": "dni",
+          "weeks": "týždne",
+          "months": "mesiace"
+        }
       }
     },
     "conjunctions": {

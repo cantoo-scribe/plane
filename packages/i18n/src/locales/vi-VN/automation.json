@@ -133,8 +133,29 @@
         "delete_only_action": "Vô hiệu hóa tự động hóa trước khi xóa hành động duy nhất của nó."
       },
       "create_work_item": {
-        "name_placeholder": "Tiêu đề work item (tùy chọn)",
-        "project_placeholder": "Chọn một dự án"
+        "name_placeholder": "Tiêu đề work item",
+        "project_placeholder": "Chọn một dự án",
+        "name_label": "Tiêu đề",
+        "name_required": "Tiêu đề là bắt buộc để tạo work item.",
+        "project_required": "Chọn một dự án để tạo work item.",
+        "add_property": "Thêm thuộc tính…"
+      },
+      "field_value": {
+        "mode": {
+          "static": "Giá trị cố định",
+          "from_source": "Từ work item nguồn",
+          "relative_date": "Ngày tương đối"
+        },
+        "base": {
+          "now": "Hôm nay",
+          "source_start_date": "Ngày bắt đầu nguồn",
+          "source_target_date": "Ngày đến hạn nguồn"
+        },
+        "unit": {
+          "days": "ngày",
+          "weeks": "tuần",
+          "months": "tháng"
+        }
       }
     },
     "conjunctions": {
