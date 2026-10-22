@@ -31,6 +31,8 @@ export type TIssueForm = {
   id: string;
   workspace_id: string;
   project_id: string;
+  project_name?: string | null;
+  project_identifier?: string | null;
   issue_type_id: string;
   name: string;
   description?: string;

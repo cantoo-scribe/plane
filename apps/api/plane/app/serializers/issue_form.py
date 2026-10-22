@@ -78,6 +78,8 @@ class IssueFormSerializer(BaseSerializer):
     issue_type_id = serializers.UUIDField()
     target_state_id = serializers.UUIDField(required=False, allow_null=True)
     public_url_path = serializers.SerializerMethodField()
+    project_name = serializers.SerializerMethodField()
+    project_identifier = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueForm
@@ -85,6 +87,8 @@ class IssueFormSerializer(BaseSerializer):
             "id",
             "workspace_id",
             "project_id",
+            "project_name",
+            "project_identifier",
             "issue_type_id",
             "name",
             "description",
@@ -101,6 +105,12 @@ class IssueFormSerializer(BaseSerializer):
 
     def get_public_url_path(self, obj):
         return f"/forms/{obj.anchor}"
+
+    def get_project_name(self, obj):
+        return getattr(obj.project, "name", None) if obj.project_id else None
+
+    def get_project_identifier(self, obj):
+        return getattr(obj.project, "identifier", None) if obj.project_id else None
 
     def validate_name(self, value):
         if not value or not str(value).strip():

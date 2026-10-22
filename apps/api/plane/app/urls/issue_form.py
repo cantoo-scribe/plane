@@ -4,10 +4,15 @@
 
 from django.urls import path
 
-from plane.app.views import IssueFormFieldViewSet, IssueFormViewSet
+from plane.app.views import IssueFormFieldViewSet, IssueFormViewSet, WorkspaceIssueFormViewSet
 
 
 urlpatterns = [
+    path(
+        "workspaces/<str:slug>/forms/",
+        WorkspaceIssueFormViewSet.as_view({"get": "list"}),
+        name="workspace-issue-forms",
+    ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/forms/",
         IssueFormViewSet.as_view({"get": "list", "post": "create"}),

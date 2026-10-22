@@ -19,12 +19,27 @@ from plane.db.models import (
     IssueFormCoreKey,
     IssueFormField,
     IssueFormFieldTargetKind,
+    IssueType,
     Project,
     ProjectIssueType,
     State,
     Workspace,
     PUBLIC_FORM_CUSTOM_PROPERTY_TYPES,
 )
+
+
+def _project_can_access_type(slug, project_id, type_id) -> bool:
+    """Match issue type list rules: workspace catalog vs project join table."""
+    project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+    if not project:
+        return False
+    if project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+        return IssueType.objects.filter(workspace_id=project.workspace_id, pk=type_id).exists()
+    return ProjectIssueType.objects.filter(
+        workspace__slug=slug,
+        project_id=project_id,
+        issue_type_id=type_id,
+    ).exists()
 
 
 class IssueFormViewSet(BaseViewSet):
@@ -39,17 +54,13 @@ class IssueFormViewSet(BaseViewSet):
                 project__project_projectmember__member=self.request.user,
                 project__project_projectmember__is_active=True,
             )
-            .select_related("issue_type", "target_state")
+            .select_related("issue_type", "target_state", "project")
             .prefetch_related("fields__custom_property__options")
             .distinct()
         )
 
     def _ensure_type_in_project(self, slug, project_id, type_id):
-        return ProjectIssueType.objects.filter(
-            workspace__slug=slug,
-            project_id=project_id,
-            issue_type_id=type_id,
-        ).exists()
+        return _project_can_access_type(slug, project_id, type_id)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
@@ -161,6 +172,35 @@ class IssueFormViewSet(BaseViewSet):
         form.renew_anchor()
         form = self.get_queryset().get(pk=pk)
         return Response(IssueFormSerializer(form).data, status=status.HTTP_200_OK)
+
+
+class WorkspaceIssueFormViewSet(BaseViewSet):
+    serializer_class = IssueFormSerializer
+    model = IssueForm
+
+    def get_queryset(self):
+        return (
+            IssueForm.objects.filter(
+                workspace__slug=self.kwargs.get("slug"),
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+            )
+            .select_related("issue_type", "target_state", "project")
+            .prefetch_related("fields__custom_property__options")
+            .order_by("-created_at")
+            .distinct()
+        )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    def list(self, request, slug):
+        queryset = self.get_queryset()
+        project_id = request.GET.get("project_id")
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+        if request.GET.get("active_only", "false") == "true":
+            queryset = queryset.filter(is_active=True)
+        serializer = IssueFormSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class IssueFormFieldViewSet(BaseViewSet):

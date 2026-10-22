@@ -13,6 +13,12 @@ export class IssueFormService extends APIService {
     super(API_BASE_URL);
   }
 
+  async listWorkspace(workspaceSlug: string, projectId?: string): Promise<TIssueForm[]> {
+    const params = projectId ? { project_id: projectId } : undefined;
+    const { data } = await this.get(`/api/workspaces/${workspaceSlug}/forms/`, { params });
+    return data;
+  }
+
   async list(workspaceSlug: string, projectId: string): Promise<TIssueForm[]> {
     const { data } = await this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/forms/`);
     return data;

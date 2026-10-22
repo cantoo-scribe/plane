@@ -261,4 +261,4 @@ from .issue_custom_property.base import (
     IssueCustomPropertyViewSet,
 )
 from .issue_custom_property.workspace import WorkspaceIssueCustomPropertyViewSet
-from .issue_form import IssueFormFieldViewSet, IssueFormViewSet
+from .issue_form import IssueFormFieldViewSet, IssueFormViewSet, WorkspaceIssueFormViewSet

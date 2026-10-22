@@ -14,7 +14,7 @@ import { Switch } from "@makeplane/propel/components/switch";
 import { setToast } from "@plane/blocks/toast";
 import { SPACE_BASE_PATH, SPACE_BASE_URL } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import type { TIssueCustomProperty, TIssueForm, TIssueFormCoreKey, TIssueFormField } from "@plane/types";
+import type { IProject, TIssueCustomProperty, TIssueForm, TIssueFormCoreKey, TIssueFormField } from "@plane/types";
 import { ISSUE_FORM_CORE_FIELD_OPTIONS } from "@plane/types";
 import { SettingsHeading } from "@/components/settings/heading";
 import { useIssueType } from "@/hooks/store/use-issue-type";
@@ -25,7 +25,7 @@ const formService = new IssueFormService();
 
 type Props = {
   workspaceSlug: string;
-  projectId: string;
+  projects: IProject[];
   isAdmin: boolean;
 };
 
@@ -48,17 +48,33 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function workItemTypesHref(workspaceSlug: string, project: IProject | undefined) {
+  if (!project) return `/${workspaceSlug}/settings/work-item-types`;
+  if ((project.issue_type_source ?? "WORKSPACE") === "WORKSPACE") {
+    return `/${workspaceSlug}/settings/work-item-types`;
+  }
+  return `/${workspaceSlug}/settings/projects/${project.id}/work-item-types`;
+}
+
 export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
-  const { workspaceSlug, projectId, isAdmin } = props;
+  const { workspaceSlug, projects, isAdmin } = props;
   const { t } = useTranslation();
   const { getProjectById, updateProject } = useProject();
-  const { getProjectIssueTypes, getPropertiesForType, fetchProjectIssueTypes, fetchProperties, createIssueType } =
-    useIssueType();
+  const {
+    getProjectIssueTypes,
+    getPropertiesForType,
+    fetchProjectIssueTypes,
+    fetchProperties,
+    createIssueType,
+    createWorkspaceIssueType,
+  } = useIssueType();
 
   const [forms, setForms] = useState<TIssueForm[]>([]);
+  const [filterProjectId, setFilterProjectId] = useState("");
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [createProjectId, setCreateProjectId] = useState("");
   const [newName, setNewName] = useState("");
   const [newTypeId, setNewTypeId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -66,18 +82,29 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const [newTypeName, setNewTypeName] = useState("");
   const [creatingType, setCreatingType] = useState(false);
 
-  const project = getProjectById(projectId);
-  const types = getProjectIssueTypes(projectId);
+  const createProject = createProjectId ? getProjectById(createProjectId) : undefined;
+  const createTypeSource = createProject?.issue_type_source ?? "WORKSPACE";
+  const types = createProjectId ? getProjectIssueTypes(createProjectId) : [];
+  const typeIdsKey = types.map((type) => type.id).join(",");
+  const defaultTypeId = types.find((type) => type.is_default)?.id ?? types[0]?.id ?? "";
   const selectedForm = forms.find((f) => f.id === selectedFormId) ?? null;
+  const selectedProjectId = selectedForm?.project_id ?? "";
+  const selectedProject = selectedProjectId ? getProjectById(selectedProjectId) : undefined;
   const properties = getPropertiesForType(selectedForm?.issue_type_id ?? null).filter((p) =>
     PUBLIC_PROPERTY_TYPES.has(p.property_type)
   );
-  const workItemTypesHref = `/${workspaceSlug}/settings/projects/${projectId}/work-item-types`;
+  const createTypesHref = workItemTypesHref(workspaceSlug, createProject);
+  const selectedTypesHref = workItemTypesHref(workspaceSlug, selectedProject);
+
+  const filteredForms = useMemo(
+    () => (filterProjectId ? forms.filter((form) => form.project_id === filterProjectId) : forms),
+    [forms, filterProjectId]
+  );
 
   const loadForms = async () => {
     setLoading(true);
     try {
-      const data = await formService.list(workspaceSlug, projectId);
+      const data = await formService.listWorkspace(workspaceSlug);
       setForms(data);
       setSelectedFormId((current) => {
         if (current && data.some((form) => form.id === current)) return current;
@@ -95,34 +122,47 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   };
 
   useEffect(() => {
-    setShowCreate(false);
-    setNewName("");
-    setNewTypeId("");
-    setShowCreateType(false);
-    setNewTypeName("");
-    setSelectedFormId(null);
-    void fetchProjectIssueTypes(workspaceSlug, projectId);
     void loadForms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceSlug, projectId]);
+  }, [workspaceSlug]);
 
   useEffect(() => {
-    if (selectedForm?.issue_type_id) {
-      void fetchProperties(workspaceSlug, projectId, selectedForm.issue_type_id);
+    if (!projects.length) return;
+    if (!createProjectId || !projects.some((p) => p.id === createProjectId)) {
+      setCreateProjectId(projects[0].id);
     }
-  }, [selectedForm?.issue_type_id, workspaceSlug, projectId, fetchProperties]);
+  }, [projects, createProjectId]);
 
-  // Keep the type picker on a type that belongs to the current project.
   useEffect(() => {
-    if (!types.length) {
+    if (!createProjectId) return;
+    setShowCreateType(false);
+    setNewTypeName("");
+    setNewTypeId("");
+    void fetchProjectIssueTypes(workspaceSlug, createProjectId);
+  }, [workspaceSlug, createProjectId, fetchProjectIssueTypes]);
+
+  useEffect(() => {
+    if (selectedForm?.issue_type_id && selectedForm.project_id) {
+      void fetchProperties(workspaceSlug, selectedForm.project_id, selectedForm.issue_type_id);
+    }
+  }, [selectedForm?.issue_type_id, selectedForm?.project_id, workspaceSlug, fetchProperties]);
+
+  useEffect(() => {
+    if (!typeIdsKey) {
       if (newTypeId) setNewTypeId("");
       return;
     }
-    const stillValid = types.some((type) => type.id === newTypeId);
-    if (!stillValid) {
-      setNewTypeId(types.find((type) => type.is_default)?.id ?? types[0].id);
+    if (!typeIdsKey.split(",").includes(newTypeId)) {
+      setNewTypeId(defaultTypeId);
     }
-  }, [types, newTypeId]);
+  }, [typeIdsKey, defaultTypeId, newTypeId]);
+
+  useEffect(() => {
+    if (!selectedFormId) return;
+    if (!filteredForms.some((form) => form.id === selectedFormId)) {
+      setSelectedFormId(filteredForms[0]?.id ?? null);
+    }
+  }, [filteredForms, selectedFormId]);
 
   const usedCustomPropertyIds = useMemo(
     () =>
@@ -145,7 +185,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   );
 
   const handleCreateType = async () => {
-    if (!isAdmin || creatingType) return;
+    if (!isAdmin || creatingType || !createProjectId) return;
     const name = newTypeName.trim();
     if (!name) {
       setToast({ type: "error", title: "Name required", message: "Enter a work item type name." });
@@ -153,10 +193,14 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     }
     setCreatingType(true);
     try {
-      if (project && !project.is_issue_type_enabled) {
-        await updateProject(workspaceSlug, projectId, { is_issue_type_enabled: true });
+      if (createProject && !createProject.is_issue_type_enabled) {
+        await updateProject(workspaceSlug, createProjectId, { is_issue_type_enabled: true });
       }
-      const type = await createIssueType(workspaceSlug, projectId, { name });
+      const type =
+        createTypeSource === "WORKSPACE"
+          ? await createWorkspaceIssueType(workspaceSlug, { name })
+          : await createIssueType(workspaceSlug, createProjectId, { name });
+      await fetchProjectIssueTypes(workspaceSlug, createProjectId);
       setNewTypeId(type.id);
       setNewTypeName("");
       setShowCreateType(false);
@@ -175,6 +219,10 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
 
   const handleCreate = async () => {
     if (!isAdmin || busy) return;
+    if (!createProjectId) {
+      setToast({ type: "error", title: "Project required", message: "Select a project for this form." });
+      return;
+    }
     const name = newName.trim();
     if (!name) {
       setToast({ type: "error", title: "Name required", message: "Enter a form name before creating." });
@@ -190,7 +238,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     }
     setBusy(true);
     try {
-      const form = await formService.create(workspaceSlug, projectId, {
+      const form = await formService.create(workspaceSlug, createProjectId, {
         name,
         issue_type_id: newTypeId,
       });
@@ -210,7 +258,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     }
   };
 
-  const refreshForm = async (formId: string) => {
+  const refreshForm = async (formId: string, projectId: string) => {
     const form = await formService.retrieve(workspaceSlug, projectId, formId);
     setForms((prev) => prev.map((f) => (f.id === formId ? form : f)));
   };
@@ -218,7 +266,9 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const handleToggleActive = async (checked: boolean) => {
     if (!selectedForm || !isAdmin) return;
     try {
-      const updated = await formService.update(workspaceSlug, projectId, selectedForm.id, { is_active: checked });
+      const updated = await formService.update(workspaceSlug, selectedForm.project_id, selectedForm.id, {
+        is_active: checked,
+      });
       setForms((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)));
     } catch (error) {
       setToast({
@@ -232,7 +282,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const handleRenewAnchor = async () => {
     if (!selectedForm || !isAdmin) return;
     try {
-      const updated = await formService.renewAnchor(workspaceSlug, projectId, selectedForm.id);
+      const updated = await formService.renewAnchor(workspaceSlug, selectedForm.project_id, selectedForm.id);
       setForms((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)));
       setToast({ type: "success", title: "Success!", message: "Public link renewed" });
     } catch (error) {
@@ -248,7 +298,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     if (!selectedForm || !isAdmin) return;
     if (!window.confirm(`Delete form “${selectedForm.name}”?`)) return;
     try {
-      await formService.destroy(workspaceSlug, projectId, selectedForm.id);
+      await formService.destroy(workspaceSlug, selectedForm.project_id, selectedForm.id);
       setForms((prev) => prev.filter((f) => f.id !== selectedForm.id));
       setSelectedFormId(null);
       setToast({ type: "success", title: "Success!", message: "Form deleted" });
@@ -265,14 +315,14 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     if (!selectedForm || !isAdmin || usedCoreKeys.has(coreKey)) return;
     const option = ISSUE_FORM_CORE_FIELD_OPTIONS.find((o) => o.key === coreKey);
     try {
-      await formService.createField(workspaceSlug, projectId, selectedForm.id, {
+      await formService.createField(workspaceSlug, selectedForm.project_id, selectedForm.id, {
         label: option?.label ?? coreKey,
         target_kind: "CORE",
         core_key: coreKey,
         is_required: coreKey === "name",
         sort_order: ((selectedForm.form_fields?.length ?? 0) + 1) * 10000,
       });
-      await refreshForm(selectedForm.id);
+      await refreshForm(selectedForm.id, selectedForm.project_id);
     } catch (error) {
       setToast({
         type: "error",
@@ -285,14 +335,14 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const handleAddCustomField = async (property: TIssueCustomProperty) => {
     if (!selectedForm || !isAdmin || usedCustomPropertyIds.has(property.id)) return;
     try {
-      await formService.createField(workspaceSlug, projectId, selectedForm.id, {
+      await formService.createField(workspaceSlug, selectedForm.project_id, selectedForm.id, {
         label: property.name,
         target_kind: "CUSTOM",
         custom_property_id: property.id,
         is_required: property.is_required,
         sort_order: ((selectedForm.form_fields?.length ?? 0) + 1) * 10000,
       });
-      await refreshForm(selectedForm.id);
+      await refreshForm(selectedForm.id, selectedForm.project_id);
     } catch (error) {
       setToast({
         type: "error",
@@ -305,8 +355,8 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const handleUpdateField = async (field: TIssueFormField, patch: Partial<TIssueFormField>) => {
     if (!selectedForm || !isAdmin) return;
     try {
-      await formService.updateField(workspaceSlug, projectId, selectedForm.id, field.id, patch);
-      await refreshForm(selectedForm.id);
+      await formService.updateField(workspaceSlug, selectedForm.project_id, selectedForm.id, field.id, patch);
+      await refreshForm(selectedForm.id, selectedForm.project_id);
     } catch (error) {
       setToast({
         type: "error",
@@ -319,8 +369,8 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const handleDeleteField = async (field: TIssueFormField) => {
     if (!selectedForm || !isAdmin) return;
     try {
-      await formService.destroyField(workspaceSlug, projectId, selectedForm.id, field.id);
-      await refreshForm(selectedForm.id);
+      await formService.destroyField(workspaceSlug, selectedForm.project_id, selectedForm.id, field.id);
+      await refreshForm(selectedForm.id, selectedForm.project_id);
     } catch (error) {
       setToast({
         type: "error",
@@ -342,7 +392,11 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
 
   const createTypePanel = (
     <div className="space-y-2 rounded-md border border-dashed border-subtle-1 p-3">
-      <p className="text-xs text-tertiary">Forms are built from a work item type and its custom properties.</p>
+      <p className="text-xs text-tertiary">
+        {createTypeSource === "WORKSPACE"
+          ? "This project uses workspace work item types. New types are created in workspace settings."
+          : "Forms are built from a work item type and its custom properties."}
+      </p>
       <Input
         size="md"
         surface="field"
@@ -363,12 +417,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
           stretch="auto"
           type="button"
           onClick={() => void handleCreateType()}
-          disabled={creatingType || !isAdmin}
+          disabled={creatingType || !isAdmin || !createProjectId}
           loading={creatingType}
           label="Create type"
           icon={<Plus className="size-3.5" />}
         />
-        <RouterLink to={workItemTypesHref} className="text-xs text-accent-primary hover:underline">
+        <RouterLink to={createTypesHref} className="text-xs text-accent-primary hover:underline">
           Manage types & properties
         </RouterLink>
       </div>
@@ -379,23 +433,14 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     return <div className="text-sm text-tertiary">Loading…</div>;
   }
 
-  if (!types.length) {
+  if (!projects.length) {
     return (
       <div className="space-y-4">
         <SettingsHeading
           title={t("common.forms")}
           description="Create shareable forms that create work items from a work item type."
         />
-        <p className="text-sm text-tertiary">
-          This project has no work item types yet. Create one to start building forms.
-        </p>
-        {isAdmin ? (
-          createTypePanel
-        ) : (
-          <RouterLink to={workItemTypesHref} className="text-sm text-accent-primary hover:underline">
-            Open work item types settings
-          </RouterLink>
-        )}
+        <p className="text-sm text-tertiary">{t("workspace_projects.empty_state.no_projects.title")}</p>
       </div>
     );
   }
@@ -404,7 +449,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     <div className="space-y-6">
       <SettingsHeading
         title={t("common.forms")}
-        description="Public forms that create work items directly in this project."
+        description="Public forms that create work items directly in a project."
       />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -423,8 +468,44 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
             )}
           </div>
 
+          <div className="space-y-1.5">
+            <label htmlFor="issue-form-filter-project" className="text-xs font-medium text-secondary">
+              Filter by project
+            </label>
+            <select
+              id="issue-form-filter-project"
+              className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
+              value={filterProjectId}
+              onChange={(e) => setFilterProjectId(e.target.value)}
+            >
+              <option value="">All projects</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {showCreate && (
             <div className="space-y-3 rounded-md border border-subtle-1 p-3">
+              <div className="space-y-1.5">
+                <label htmlFor="issue-form-create-project" className="text-xs font-medium text-secondary">
+                  Project
+                </label>
+                <select
+                  id="issue-form-create-project"
+                  className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
+                  value={createProjectId}
+                  onChange={(e) => setCreateProjectId(e.target.value)}
+                >
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Input
                 size="md"
                 surface="field"
@@ -451,18 +532,22 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                     {showCreateType ? "Hide" : "New type"}
                   </button>
                 </div>
-                <select
-                  id="issue-form-type"
-                  className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
-                  value={newTypeId}
-                  onChange={(e) => setNewTypeId(e.target.value)}
-                >
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+                {types.length > 0 ? (
+                  <select
+                    id="issue-form-type"
+                    className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
+                    value={newTypeId}
+                    onChange={(e) => setNewTypeId(e.target.value)}
+                  >
+                    {types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-xs text-tertiary">No types for this project yet.</p>
+                )}
               </div>
               {showCreateType && createTypePanel}
               <Button
@@ -471,7 +556,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                 stretch="auto"
                 type="button"
                 onClick={() => void handleCreate()}
-                disabled={busy}
+                disabled={busy || !types.length}
                 loading={busy}
                 label="Create"
               />
@@ -479,7 +564,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
           )}
 
           <ul className="space-y-1">
-            {forms.map((form) => (
+            {filteredForms.map((form) => (
               <li key={form.id}>
                 <button
                   type="button"
@@ -488,23 +573,28 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                   }`}
                   onClick={() => setSelectedFormId(form.id)}
                 >
-                  {form.name}
-                  {!form.is_active && <span className="ml-1 text-tertiary">(off)</span>}
+                  <span className="block truncate">{form.name}</span>
+                  <span className="text-xs block truncate text-tertiary">
+                    {form.project_identifier || form.project_name || getProjectById(form.project_id)?.name}
+                    {!form.is_active && " · off"}
+                  </span>
                 </button>
               </li>
             ))}
-            {!forms.length && <li className="text-sm text-tertiary">No forms yet</li>}
+            {!filteredForms.length && <li className="text-sm text-tertiary">No forms yet</li>}
           </ul>
-
-          <RouterLink to={workItemTypesHref} className="text-xs inline-flex text-accent-primary hover:underline">
-            Manage work item types
-          </RouterLink>
         </aside>
 
         {selectedForm ? (
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
-              <h5 className="text-base font-semibold">{selectedForm.name}</h5>
+              <div>
+                <h5 className="text-base font-semibold">{selectedForm.name}</h5>
+                <p className="text-xs text-tertiary">
+                  {selectedForm.project_name || selectedProject?.name}
+                  {selectedForm.project_identifier ? ` (${selectedForm.project_identifier})` : ""}
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-tertiary">Active</span>
                 <Switch
@@ -649,7 +739,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                     {!properties.length && (
                       <p className="text-xs text-tertiary">
                         No compatible custom properties on this type.{" "}
-                        <RouterLink to={workItemTypesHref} className="text-accent-primary hover:underline">
+                        <RouterLink to={selectedTypesHref} className="text-accent-primary hover:underline">
                           Add properties
                         </RouterLink>
                       </p>
