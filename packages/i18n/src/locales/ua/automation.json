@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Пріоритет змінено",
+        "label_changed": "Мітку змінено",
+        "comment_added": "Коментар додано",
+        "name_changed": "Назву змінено"
+      },
+      "config": {
+        "any": "Будь-який",
+        "from_state": "Зі стану",
+        "to_state": "До стану",
+        "assignee_added": "Додано виконавця",
+        "from_priority": "З пріоритету",
+        "to_priority": "До пріоритету",
+        "label_added": "Додано мітку",
+        "pick_project_for_states": "Виберіть проєкт вище, щоб вибрати його стани."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Виконавець",
+        "name_contains": "Назва містить",
+        "issue_type": "Тип work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Змінити властивість",
         "run_script": "Запустити скрипт",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Створити work item"
       },
       "configuration": {
         "label": "Конфігурація",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Вимкніть автоматизацію перед видаленням її єдиної дії."
+      },
+      "create_work_item": {
+        "name_placeholder": "Назва work item (необов’язково)",
+        "project_placeholder": "Виберіть проєкт"
       }
     },
     "conjunctions": {

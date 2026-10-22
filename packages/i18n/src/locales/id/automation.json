@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Prioritas diubah",
+        "label_changed": "Label diubah",
+        "comment_added": "Komentar ditambahkan",
+        "name_changed": "Nama diubah"
+      },
+      "config": {
+        "any": "Semua",
+        "from_state": "Dari status",
+        "to_state": "Ke status",
+        "assignee_added": "Penerima tugas ditambahkan",
+        "from_priority": "Dari prioritas",
+        "to_priority": "Ke prioritas",
+        "label_added": "Label ditambahkan",
+        "pick_project_for_states": "Pilih proyek di atas untuk memilih statusnya."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Penerima tugas",
+        "name_contains": "Nama berisi",
+        "issue_type": "Jenis work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Ubah properti",
         "run_script": "Jalankan Skrip",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Buat work item"
       },
       "configuration": {
         "label": "Konfigurasi",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Nonaktifkan otomatisasi sebelum menghapus satu-satunya aksi."
+      },
+      "create_work_item": {
+        "name_placeholder": "Judul work item (opsional)",
+        "project_placeholder": "Pilih proyek"
       }
     },
     "conjunctions": {

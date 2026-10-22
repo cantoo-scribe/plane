@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Öncelik değiştirildi",
+        "label_changed": "Etiket değiştirildi",
+        "comment_added": "Yorum eklendi",
+        "name_changed": "Ad değiştirildi"
+      },
+      "config": {
+        "any": "Herhangi",
+        "from_state": "Başlangıç durumu",
+        "to_state": "Hedef durum",
+        "assignee_added": "Atanan eklendi",
+        "from_priority": "Başlangıç önceliği",
+        "to_priority": "Hedef öncelik",
+        "label_added": "Etiket eklendi",
+        "pick_project_for_states": "Durumlarını seçmek için yukarıdan bir proje seçin."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Atanan",
+        "name_contains": "Ad şunu içerir",
+        "issue_type": "Work item türü"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Özelliği değiştir",
         "run_script": "Komut Dosyası Çalıştır",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Work item oluştur"
       },
       "configuration": {
         "label": "Yapılandırma",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Tek eylemini silmeden önce otomasyonu devre dışı bırakın."
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item başlığı (isteğe bağlı)",
+        "project_placeholder": "Bir proje seçin"
       }
     },
     "conjunctions": {

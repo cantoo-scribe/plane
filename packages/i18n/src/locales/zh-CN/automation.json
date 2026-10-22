@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "工作项已创建",
         "state_changed": "状态已更改",
-        "assignee_changed": "负责人已更改"
+        "assignee_changed": "负责人已更改",
+        "priority_changed": "优先级已更改",
+        "label_changed": "标签已更改",
+        "comment_added": "已添加评论",
+        "name_changed": "名称已更改"
+      },
+      "config": {
+        "any": "任意",
+        "from_state": "原状态",
+        "to_state": "目标状态",
+        "assignee_added": "已添加负责人",
+        "from_priority": "原优先级",
+        "to_priority": "目标优先级",
+        "label_added": "已添加标签",
+        "pick_project_for_states": "请先在上方选择一个项目，以便选择其状态。"
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "状态",
         "priority": "优先级",
-        "label": "标签"
+        "label": "标签",
+        "assignee": "负责人",
+        "name_contains": "名称包含",
+        "issue_type": "Work item 类型"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "更改属性",
         "run_script": "运行脚本",
         "change_state": "更改状态",
-        "assign": "指派"
+        "assign": "指派",
+        "create_work_item": "创建 Work item"
       },
       "configuration": {
         "label": "配置",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "在删除唯一操作之前，请先禁用自动化。"
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item 标题（可选）",
+        "project_placeholder": "选择项目"
       }
     },
     "conjunctions": {

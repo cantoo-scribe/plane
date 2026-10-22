@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "ワークアイテムが作成されたとき",
         "state_changed": "状態が変更されたとき",
-        "assignee_changed": "担当者が変更されたとき"
+        "assignee_changed": "担当者が変更されたとき",
+        "priority_changed": "優先度が変更されました",
+        "label_changed": "ラベルが変更されました",
+        "comment_added": "コメントが追加されました",
+        "name_changed": "名前が変更されました"
+      },
+      "config": {
+        "any": "すべて",
+        "from_state": "変更前の状態",
+        "to_state": "変更後の状態",
+        "assignee_added": "追加された担当者",
+        "from_priority": "変更前の優先度",
+        "to_priority": "変更後の優先度",
+        "label_added": "追加されたラベル",
+        "pick_project_for_states": "状態を選ぶには、上でプロジェクトを選択してください。"
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "状態",
         "priority": "優先度",
-        "label": "ラベル"
+        "label": "ラベル",
+        "assignee": "担当者",
+        "name_contains": "名前に含まれる",
+        "issue_type": "Work item のタイプ"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "プロパティを変更",
         "run_script": "スクリプトを実行",
         "change_state": "状態を変更",
-        "assign": "担当者を割り当て"
+        "assign": "担当者を割り当て",
+        "create_work_item": "Work item を作成"
       },
       "configuration": {
         "label": "設定",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "唯一のアクションを削除する前に自動化を無効にしてください。"
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item のタイトル（任意）",
+        "project_placeholder": "プロジェクトを選択"
       }
     },
     "conjunctions": {

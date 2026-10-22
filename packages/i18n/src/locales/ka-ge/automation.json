@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "პრიორიტეტი შეიცვალა",
+        "label_changed": "ლეიბლი შეიცვალა",
+        "comment_added": "კომენტარი დაემატა",
+        "name_changed": "სახელი შეიცვალა"
+      },
+      "config": {
+        "any": "ნებისმიერი",
+        "from_state": "მდგომარეობიდან",
+        "to_state": "მდგომარეობამდე",
+        "assignee_added": "დამატებული შემსრულებელი",
+        "from_priority": "პრიორიტეტიდან",
+        "to_priority": "პრიორიტეტამდე",
+        "label_added": "დამატებული ლეიბლი",
+        "pick_project_for_states": "აირჩიეთ პროექტი ზემოთ, რომ აირჩიოთ მისი მდგომარეობები."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "შემსრულებელი",
+        "name_contains": "სახელი შეიცავს",
+        "issue_type": "Work item-ის ტიპი"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Change property",
         "run_script": "Run Script",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Work item-ის შექმნა"
       },
       "configuration": {
         "label": "Configuration",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Disable the automation before deleting its only action."
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item-ის სათაური (არასავალდებულო)",
+        "project_placeholder": "აირჩიეთ პროექტი"
       }
     },
     "conjunctions": {

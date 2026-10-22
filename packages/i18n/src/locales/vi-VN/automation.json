@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Độ ưu tiên đã thay đổi",
+        "label_changed": "Nhãn đã thay đổi",
+        "comment_added": "Đã thêm bình luận",
+        "name_changed": "Tên đã thay đổi"
+      },
+      "config": {
+        "any": "Bất kỳ",
+        "from_state": "Từ trạng thái",
+        "to_state": "Đến trạng thái",
+        "assignee_added": "Người được giao đã thêm",
+        "from_priority": "Từ độ ưu tiên",
+        "to_priority": "Đến độ ưu tiên",
+        "label_added": "Nhãn đã thêm",
+        "pick_project_for_states": "Chọn một dự án ở trên để chọn trạng thái của dự án đó."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Người được giao",
+        "name_contains": "Tên chứa",
+        "issue_type": "Loại work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Thay đổi thuộc tính",
         "run_script": "Chạy script",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Tạo work item"
       },
       "configuration": {
         "label": "Cấu hình",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Vô hiệu hóa tự động hóa trước khi xóa hành động duy nhất của nó."
+      },
+      "create_work_item": {
+        "name_placeholder": "Tiêu đề work item (tùy chọn)",
+        "project_placeholder": "Chọn một dự án"
       }
     },
     "conjunctions": {

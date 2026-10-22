@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Prioriteit gewijzigd",
+        "label_changed": "Label gewijzigd",
+        "comment_added": "Reactie toegevoegd",
+        "name_changed": "Naam gewijzigd"
+      },
+      "config": {
+        "any": "Alle",
+        "from_state": "Van status",
+        "to_state": "Naar status",
+        "assignee_added": "Toegewezen persoon toegevoegd",
+        "from_priority": "Van prioriteit",
+        "to_priority": "Naar prioriteit",
+        "label_added": "Label toegevoegd",
+        "pick_project_for_states": "Kies hierboven een project om de statussen te selecteren."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Toegewezen",
+        "name_contains": "Naam bevat",
+        "issue_type": "Work item-type"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Eigenschap wijzigen",
         "run_script": "Script uitvoeren",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Work item maken"
       },
       "configuration": {
         "label": "Configuratie",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Schakel de automatisering uit voordat je de enige actie verwijdert."
+      },
+      "create_work_item": {
+        "name_placeholder": "Titel van work item (optioneel)",
+        "project_placeholder": "Selecteer een project"
       }
     },
     "conjunctions": {

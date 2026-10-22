@@ -1598,8 +1598,11 @@ def issue_activity(
                 current_instance=current_instance,
             )
 
-        # Evaluate workspace automations for issue create/update events
-        if type in ("issue.activity.created", "issue.activity.updated") and issue_id is not None:
+        # Evaluate workspace automations for issue/comment events
+        if (
+            type in ("issue.activity.created", "issue.activity.updated", "comment.activity.created")
+            and issue_id is not None
+        ):
             from plane.bgtasks.workspace_automation_task import evaluate_workspace_automations
 
             evaluate_workspace_automations.delay(

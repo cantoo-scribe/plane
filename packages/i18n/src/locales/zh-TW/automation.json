@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "工作項已建立",
         "state_changed": "狀態已變更",
-        "assignee_changed": "負責人已變更"
+        "assignee_changed": "負責人已變更",
+        "priority_changed": "優先順序已變更",
+        "label_changed": "標籤已變更",
+        "comment_added": "已新增留言",
+        "name_changed": "名稱已變更"
+      },
+      "config": {
+        "any": "任意",
+        "from_state": "原狀態",
+        "to_state": "目標狀態",
+        "assignee_added": "已新增負責人",
+        "from_priority": "原優先順序",
+        "to_priority": "目標優先順序",
+        "label_added": "已新增標籤",
+        "pick_project_for_states": "請先在上方選取一個專案，以便選取其狀態。"
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "狀態",
         "priority": "優先順序",
-        "label": "標籤"
+        "label": "標籤",
+        "assignee": "負責人",
+        "name_contains": "名稱包含",
+        "issue_type": "Work item 類型"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "變更屬性",
         "run_script": "執行指令碼",
         "change_state": "變更狀態",
-        "assign": "指派"
+        "assign": "指派",
+        "create_work_item": "建立 Work item"
       },
       "configuration": {
         "label": "設定",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "在刪除唯一動作之前，請先停用自動化。"
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item 標題（選填）",
+        "project_placeholder": "選取專案"
       }
     },
     "conjunctions": {

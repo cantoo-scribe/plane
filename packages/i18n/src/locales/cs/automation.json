@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Priorita změněna",
+        "label_changed": "Štítek změněn",
+        "comment_added": "Komentář přidán",
+        "name_changed": "Název změněn"
+      },
+      "config": {
+        "any": "Libovolný",
+        "from_state": "Ze stavu",
+        "to_state": "Do stavu",
+        "assignee_added": "Přidán přiřazený",
+        "from_priority": "Z priority",
+        "to_priority": "Do priority",
+        "label_added": "Přidán štítek",
+        "pick_project_for_states": "Vyberte výše projekt, abyste mohli zvolit jeho stavy."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Přiřazený",
+        "name_contains": "Název obsahuje",
+        "issue_type": "Typ work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Změnit vlastnost",
         "run_script": "Spustit skript",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Vytvořit work item"
       },
       "configuration": {
         "label": "Konfigurace",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Před smazáním jediné akce automatizaci zakažte."
+      },
+      "create_work_item": {
+        "name_placeholder": "Název work item (volitelné)",
+        "project_placeholder": "Vyberte projekt"
       }
     },
     "conjunctions": {

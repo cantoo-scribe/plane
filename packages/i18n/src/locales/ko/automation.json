@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "워크 아이템 생성됨",
         "state_changed": "상태 변경됨",
-        "assignee_changed": "담당자 변경됨"
+        "assignee_changed": "담당자 변경됨",
+        "priority_changed": "우선순위가 변경됨",
+        "label_changed": "레이블이 변경됨",
+        "comment_added": "댓글이 추가됨",
+        "name_changed": "이름이 변경됨"
+      },
+      "config": {
+        "any": "전체",
+        "from_state": "이전 상태",
+        "to_state": "이후 상태",
+        "assignee_added": "담당자 추가됨",
+        "from_priority": "이전 우선순위",
+        "to_priority": "이후 우선순위",
+        "label_added": "레이블 추가됨",
+        "pick_project_for_states": "상태를 선택하려면 위에서 프로젝트를 선택하세요."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "상태",
         "priority": "우선순위",
-        "label": "레이블"
+        "label": "레이블",
+        "assignee": "담당자",
+        "name_contains": "이름에 포함",
+        "issue_type": "Work item 유형"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "속성 변경",
         "run_script": "스크립트 실행",
         "change_state": "상태 변경",
-        "assign": "담당자 지정"
+        "assign": "담당자 지정",
+        "create_work_item": "Work item 만들기"
       },
       "configuration": {
         "label": "설정",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "유일한 액션을 삭제하기 전에 자동화를 비활성화하세요."
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item 제목(선택 사항)",
+        "project_placeholder": "프로젝트 선택"
       }
     },
     "conjunctions": {

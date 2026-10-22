@@ -19,6 +19,7 @@ from plane.db.models import (
     Issue,
     IssueAssignee,
     IssueComment,
+    Project,
     State,
     WorkspaceAutomation,
     WorkspaceAutomationRun,
@@ -54,7 +55,6 @@ def _normalize_values(value: Any) -> set[str]:
     if isinstance(value, list):
         return {str(item) for item in value if item is not None}
     if isinstance(value, dict):
-        # Support {"value": "..."} or {"values": [...]}
         if "values" in value:
             return _normalize_values(value.get("values"))
         if "value" in value:
@@ -68,13 +68,15 @@ def detect_trigger_types(
     requested_data: dict | None,
     current_instance: dict | None,
 ) -> list[str]:
-    """Return which MVP trigger types fired for this activity event."""
     triggers: list[str] = []
     requested_data = requested_data or {}
     current_instance = current_instance or {}
 
     if activity_type == "issue.activity.created":
         triggers.append(WorkspaceAutomationTriggerType.ISSUE_CREATED)
+
+    if activity_type == "comment.activity.created":
+        triggers.append(WorkspaceAutomationTriggerType.COMMENT_ADDED)
 
     if activity_type == "issue.activity.updated":
         current_state = current_instance.get("state_id") or current_instance.get("state")
@@ -88,6 +90,20 @@ def detect_trigger_types(
             current_assignees = extract_ids(current_instance, "assignee_ids", "assignees")
             if requested_assignees != current_assignees:
                 triggers.append(WorkspaceAutomationTriggerType.ASSIGNEE_CHANGED)
+
+        if "priority" in requested_data:
+            if str(current_instance.get("priority") or "") != str(requested_data.get("priority") or ""):
+                triggers.append(WorkspaceAutomationTriggerType.PRIORITY_CHANGED)
+
+        if "label_ids" in requested_data or "labels" in requested_data:
+            requested_labels = extract_ids(requested_data, "label_ids", "labels")
+            current_labels = extract_ids(current_instance, "label_ids", "labels")
+            if requested_labels != current_labels:
+                triggers.append(WorkspaceAutomationTriggerType.LABEL_CHANGED)
+
+        if "name" in requested_data:
+            if str(current_instance.get("name") or "") != str(requested_data.get("name") or ""):
+                triggers.append(WorkspaceAutomationTriggerType.NAME_CHANGED)
 
     return triggers
 
@@ -122,6 +138,24 @@ def matches_trigger_config(
         added = requested_assignees - current_assignees
         return str(assignee_id) in added
 
+    if trigger_type == WorkspaceAutomationTriggerType.PRIORITY_CHANGED:
+        to_priority = trigger_config.get("to_priority")
+        from_priority = trigger_config.get("from_priority")
+        if to_priority and str(requested_data.get("priority") or "") != str(to_priority):
+            return False
+        if from_priority and str(current_instance.get("priority") or "") != str(from_priority):
+            return False
+        return True
+
+    if trigger_type == WorkspaceAutomationTriggerType.LABEL_CHANGED:
+        label_id = trigger_config.get("label_id")
+        if not label_id:
+            return True
+        requested_labels = extract_ids(requested_data, "label_ids", "labels")
+        current_labels = extract_ids(current_instance, "label_ids", "labels")
+        added = requested_labels - current_labels
+        return str(label_id) in added
+
     return True
 
 
@@ -129,6 +163,7 @@ def evaluate_condition(condition, issue: Issue) -> bool:
     field = condition.field
     operator = condition.operator
     expected = _normalize_values(condition.value)
+    expected_text = next(iter(expected), "") if expected else ""
 
     if field == WorkspaceAutomationConditionField.STATE:
         actual = {str(issue.state_id)} if issue.state_id else set()
@@ -136,13 +171,29 @@ def evaluate_condition(condition, issue: Issue) -> bool:
         actual = {str(issue.priority)} if issue.priority is not None else set()
     elif field == WorkspaceAutomationConditionField.LABEL:
         actual = {str(label_id) for label_id in issue.labels.values_list("id", flat=True)}
+    elif field == WorkspaceAutomationConditionField.ASSIGNEE:
+        actual = {str(assignee_id) for assignee_id in issue.assignees.values_list("id", flat=True)}
+    elif field == WorkspaceAutomationConditionField.NAME_CONTAINS:
+        name = (issue.name or "").lower()
+        return bool(expected_text) and expected_text.lower() in name
+    elif field == WorkspaceAutomationConditionField.ISSUE_TYPE:
+        actual = {str(issue.type_id)} if issue.type_id else set()
     else:
         return False
 
+    if operator == WorkspaceAutomationConditionOperator.CONTAINS:
+        if field == WorkspaceAutomationConditionField.NAME_CONTAINS:
+            return bool(expected_text) and expected_text.lower() in (issue.name or "").lower()
+        return bool(actual & expected)
+
     if operator == WorkspaceAutomationConditionOperator.IS:
-        if field == WorkspaceAutomationConditionField.LABEL:
+        if field in (
+            WorkspaceAutomationConditionField.LABEL,
+            WorkspaceAutomationConditionField.ASSIGNEE,
+        ):
             return bool(expected) and expected.issubset(actual)
         return bool(expected) and actual == expected
+
     if operator == WorkspaceAutomationConditionOperator.IS_ANY_OF:
         return bool(actual & expected)
     return False
@@ -185,7 +236,9 @@ def _run_change_state(issue: Issue, config: dict, actor_id: str) -> None:
 
 
 def _run_assign(issue: Issue, config: dict, actor_id: str) -> None:
-    assignee_ids = [str(assignee_id) for assignee_id in config.get("assignee_ids", []) if is_valid_uuid(str(assignee_id))]
+    assignee_ids = [
+        str(assignee_id) for assignee_id in config.get("assignee_ids", []) if is_valid_uuid(str(assignee_id))
+    ]
     if not assignee_ids:
         raise ValueError("assignee_ids required for assign action")
 
@@ -259,10 +312,101 @@ def _run_add_comment(issue: Issue, config: dict, actor_id: str) -> None:
     )
 
 
+def _run_create_work_item(issue: Issue, config: dict, actor_id: str) -> None:
+    project_id = config.get("project_id") or str(issue.project_id)
+    if not is_valid_uuid(str(project_id)):
+        raise ValueError("Invalid project_id for create_work_item action")
+
+    project = Project.objects.filter(pk=project_id, workspace_id=issue.workspace_id).first()
+    if not project:
+        raise ValueError("Project not found for create_work_item action")
+
+    name = (config.get("name") or "").strip() or f"Follow-up: {issue.name}"
+    issue_type_id = config.get("issue_type_id")
+    if issue_type_id and not is_valid_uuid(str(issue_type_id)):
+        issue_type_id = None
+
+    new_issue = Issue(
+        name=name[:255],
+        project_id=project.id,
+        workspace_id=project.workspace_id,
+        created_by_id=actor_id,
+        updated_by_id=actor_id,
+        priority=config.get("priority") or "none",
+    )
+    if issue_type_id:
+        new_issue.type_id = issue_type_id
+    new_issue.save()
+
+    issue_activity.delay(
+        type="issue.activity.created",
+        requested_data=json.dumps(
+            {
+                "name": new_issue.name,
+                "automation": True,
+                "source_issue_id": str(issue.id),
+            }
+        ),
+        current_instance=None,
+        issue_id=str(new_issue.id),
+        actor_id=str(actor_id),
+        project_id=str(project.id),
+        epoch=int(timezone.now().timestamp()),
+        subscriber=False,
+        notification=True,
+    )
+
+
+def _run_change_property(issue: Issue, config: dict, actor_id: str) -> None:
+    property_key = config.get("property")
+    value = config.get("value")
+    if not property_key:
+        raise ValueError("property is required for change_property action")
+
+    if property_key == "priority":
+        current = {"priority": issue.priority}
+        issue.priority = value or "none"
+        issue.save(update_fields=["priority", "updated_at"])
+        requested = {"priority": issue.priority, "automation": True}
+    elif property_key == "state_id":
+        if not value or not is_valid_uuid(str(value)):
+            raise ValueError("Invalid state_id value for change_property")
+        return _run_change_state(issue, {"state_id": value}, actor_id)
+    elif property_key == "name":
+        current = {"name": issue.name}
+        issue.name = str(value or "")[:255]
+        issue.save(update_fields=["name", "updated_at"])
+        requested = {"name": issue.name, "automation": True}
+    elif property_key == "target_date":
+        current = {"target_date": str(issue.target_date) if issue.target_date else None}
+        issue.target_date = value or None
+        issue.save(update_fields=["target_date", "updated_at"])
+        requested = {"target_date": str(issue.target_date) if issue.target_date else None, "automation": True}
+    elif property_key == "assignee_ids":
+        assignee_ids = value if isinstance(value, list) else ([value] if value else [])
+        return _run_assign(issue, {"assignee_ids": assignee_ids}, actor_id)
+    else:
+        raise ValueError(f"Unsupported property for change_property: {property_key}")
+
+    issue_activity.delay(
+        type="issue.activity.updated",
+        requested_data=json.dumps(requested),
+        current_instance=json.dumps(current),
+        issue_id=str(issue.id),
+        actor_id=str(actor_id),
+        project_id=str(issue.project_id),
+        epoch=int(timezone.now().timestamp()),
+        subscriber=False,
+        notification=True,
+    )
+
+
 ACTION_HANDLERS = {
     WorkspaceAutomationActionType.CHANGE_STATE: _run_change_state,
     WorkspaceAutomationActionType.ASSIGN: _run_assign,
     WorkspaceAutomationActionType.ADD_COMMENT: _run_add_comment,
+    WorkspaceAutomationActionType.CREATE_WORK_ITEM: _run_create_work_item,
+    WorkspaceAutomationActionType.CHANGE_PROPERTY: _run_change_property,
 }
 
 
@@ -306,14 +450,13 @@ def evaluate_workspace_automations(
         requested = _parse_json(requested_data) or {}
         current = _parse_json(current_instance) or {}
 
-        # Anti-loop: do not re-enter for automation-driven mutations
         if requested.get("automation"):
             return
 
         issue = (
             Issue.issue_objects.filter(pk=issue_id, project_id=project_id)
             .prefetch_related("labels", "assignees")
-            .select_related("state")
+            .select_related("state", "type")
             .first()
         )
         if not issue or issue.archived_at is not None:
@@ -347,7 +490,6 @@ def evaluate_workspace_automations(
             ):
                 continue
 
-            # Refresh issue state before condition checks / next automation
             issue.refresh_from_db()
             if issue.archived_at is not None:
                 return

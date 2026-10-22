@@ -43,6 +43,10 @@ function WorkspaceFormsPage({ params }: Route.ComponentProps) {
   }, [projects, queryProjectId, selectedProjectId]);
 
   const canPerformWorkspaceAdminActions = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
+  const canManageSelectedProject = selectedProjectId
+    ? allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, workspaceSlug, selectedProjectId) ||
+      canPerformWorkspaceAdminActions
+    : false;
   const pageTitle = currentWorkspace?.name ? `${currentWorkspace.name} - ${t("sidebar.forms")}` : undefined;
 
   const handleProjectChange = (projectId: string) => {
@@ -79,7 +83,11 @@ function WorkspaceFormsPage({ params }: Route.ComponentProps) {
         )}
 
         {selectedProjectId ? (
-          <IssueFormsRoot workspaceSlug={workspaceSlug} projectId={selectedProjectId} isAdmin />
+          <IssueFormsRoot
+            workspaceSlug={workspaceSlug}
+            projectId={selectedProjectId}
+            isAdmin={canManageSelectedProject}
+          />
         ) : (
           <div className="text-body-sm text-tertiary">{t("workspace_projects.empty_state.no_projects.title")}</div>
         )}

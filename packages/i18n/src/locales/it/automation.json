@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item creato",
         "state_changed": "Stato modificato",
-        "assignee_changed": "Assegnatario modificato"
+        "assignee_changed": "Assegnatario modificato",
+        "priority_changed": "Priorità modificata",
+        "label_changed": "Etichetta modificata",
+        "comment_added": "Commento aggiunto",
+        "name_changed": "Nome modificato"
+      },
+      "config": {
+        "any": "Qualsiasi",
+        "from_state": "Dallo stato",
+        "to_state": "Allo stato",
+        "assignee_added": "Assegnatario aggiunto",
+        "from_priority": "Dalla priorità",
+        "to_priority": "Alla priorità",
+        "label_added": "Etichetta aggiunta",
+        "pick_project_for_states": "Scegli un progetto sopra per selezionare i suoi stati."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "Stato",
         "priority": "Priorità",
-        "label": "Etichetta"
+        "label": "Etichetta",
+        "assignee": "Assegnatario",
+        "name_contains": "Il nome contiene",
+        "issue_type": "Tipo di work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Cambia proprietà",
         "run_script": "Esegui script",
         "change_state": "Cambia stato",
-        "assign": "Assegna"
+        "assign": "Assegna",
+        "create_work_item": "Crea work item"
       },
       "configuration": {
         "label": "Configurazione",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Disabilita l'automazione prima di eliminare la sua unica azione."
+      },
+      "create_work_item": {
+        "name_placeholder": "Titolo del work item (facoltativo)",
+        "project_placeholder": "Seleziona un progetto"
       }
     },
     "conjunctions": {

@@ -4,13 +4,33 @@
  * See the LICENSE file for details.
  */
 
-export type TWorkspaceAutomationTriggerType = "issue_created" | "state_changed" | "assignee_changed";
+export type TWorkspaceAutomationTriggerType =
+  | "issue_created"
+  | "state_changed"
+  | "assignee_changed"
+  | "priority_changed"
+  | "label_changed"
+  | "comment_added"
+  | "name_changed";
 
-export type TWorkspaceAutomationConditionField = "state" | "priority" | "label";
+export type TWorkspaceAutomationConditionField =
+  | "state"
+  | "priority"
+  | "label"
+  | "assignee"
+  | "name_contains"
+  | "issue_type";
 
-export type TWorkspaceAutomationConditionOperator = "is" | "is_any_of";
+export type TWorkspaceAutomationConditionOperator = "is" | "is_any_of" | "contains";
 
-export type TWorkspaceAutomationActionType = "change_state" | "assign" | "add_comment";
+export type TWorkspaceAutomationActionType =
+  | "change_state"
+  | "assign"
+  | "add_comment"
+  | "create_work_item"
+  | "change_property";
+
+export type TWorkspaceAutomationChangeableProperty = "priority" | "state_id" | "name" | "target_date" | "assignee_ids";
 
 export type TWorkspaceAutomationRunStatus = "success" | "failed" | "skipped";
 

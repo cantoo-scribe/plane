@@ -20,6 +20,8 @@ from plane.db.models.automation import (
     WorkspaceAutomationTriggerType,
 )
 
+CHANGEABLE_PROPERTIES = {"priority", "state_id", "name", "target_date", "assignee_ids"}
+
 
 class WorkspaceAutomationConditionSerializer(DynamicBaseSerializer):
     class Meta:
@@ -65,6 +67,17 @@ class WorkspaceAutomationActionSerializer(DynamicBaseSerializer):
         elif action_type == WorkspaceAutomationActionType.ADD_COMMENT:
             if not config.get("comment_html"):
                 raise serializers.ValidationError({"config": "comment_html is required for add_comment."})
+        elif action_type == WorkspaceAutomationActionType.CREATE_WORK_ITEM:
+            if not config.get("project_id"):
+                raise serializers.ValidationError({"config": "project_id is required for create_work_item."})
+        elif action_type == WorkspaceAutomationActionType.CHANGE_PROPERTY:
+            property_key = config.get("property")
+            if property_key not in CHANGEABLE_PROPERTIES:
+                raise serializers.ValidationError(
+                    {"config": f"property must be one of: {', '.join(sorted(CHANGEABLE_PROPERTIES))}."}
+                )
+            if "value" not in config:
+                raise serializers.ValidationError({"config": "value is required for change_property."})
         return attrs
 
 
@@ -99,7 +112,9 @@ class WorkspaceAutomationSerializer(DynamicBaseSerializer):
             return []
         if not isinstance(value, list):
             raise serializers.ValidationError("project_ids must be a list.")
-        return [str(project_id) for project_id in value]
+        # Keep at most one project id (single-project filter or all)
+        cleaned = [str(project_id) for project_id in value if project_id]
+        return cleaned[:1]
 
     def validate_trigger_config(self, value):
         if value is None:

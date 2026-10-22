@@ -77,12 +77,32 @@ class TestDetectTriggerTypes:
         )
         assert WorkspaceAutomationTriggerType.ASSIGNEE_CHANGED in triggers
 
+    def test_name_changed(self):
+        triggers = detect_trigger_types(
+            "issue.activity.updated",
+            {"name": "x"},
+            {"name": "y"},
+        )
+        assert WorkspaceAutomationTriggerType.NAME_CHANGED in triggers
+
+    def test_priority_changed(self):
+        triggers = detect_trigger_types(
+            "issue.activity.updated",
+            {"priority": "high"},
+            {"priority": "low"},
+        )
+        assert WorkspaceAutomationTriggerType.PRIORITY_CHANGED in triggers
+
+    def test_comment_added(self):
+        triggers = detect_trigger_types("comment.activity.created", {}, {})
+        assert WorkspaceAutomationTriggerType.COMMENT_ADDED in triggers
+
     def test_no_change_returns_empty(self):
         assert (
             detect_trigger_types(
                 "issue.activity.updated",
-                {"name": "x"},
-                {"name": "y"},
+                {"description_html": "<p>x</p>"},
+                {"description_html": "<p>y</p>"},
             )
             == []
         )

@@ -6,7 +6,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
-import { Copy, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
+import { Link as RouterLink } from "react-router";
+import { Copy, ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
 import { Switch } from "@makeplane/propel/components/switch";
@@ -17,6 +18,7 @@ import type { TIssueCustomProperty, TIssueForm, TIssueFormCoreKey, TIssueFormFie
 import { ISSUE_FORM_CORE_FIELD_OPTIONS } from "@plane/types";
 import { SettingsHeading } from "@/components/settings/heading";
 import { useIssueType } from "@/hooks/store/use-issue-type";
+import { useProject } from "@/hooks/store/use-project";
 import { IssueFormService } from "@/services/issue/issue_form.service";
 
 const formService = new IssueFormService();
@@ -34,10 +36,24 @@ function publicFormUrl(anchor: string) {
   return `${base.replace(/\/$/, "")}/forms/${anchor}`;
 }
 
+function errorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") return fallback;
+  const response = "response" in error ? (error as { response?: { data?: unknown } }).response : undefined;
+  const data = response?.data;
+  if (!data || typeof data !== "object") return fallback;
+  if ("error" in data && typeof data.error === "string") return data.error;
+  if ("name" in data && typeof data.name === "string") return data.name;
+  if ("issue_type_id" in data && typeof data.issue_type_id === "string") return data.issue_type_id;
+  if ("detail" in data && typeof data.detail === "string") return data.detail;
+  return fallback;
+}
+
 export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const { workspaceSlug, projectId, isAdmin } = props;
   const { t } = useTranslation();
-  const { getProjectIssueTypes, getPropertiesForType, fetchProjectIssueTypes, fetchProperties } = useIssueType();
+  const { getProjectById, updateProject } = useProject();
+  const { getProjectIssueTypes, getPropertiesForType, fetchProjectIssueTypes, fetchProperties, createIssueType } =
+    useIssueType();
 
   const [forms, setForms] = useState<TIssueForm[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
@@ -46,27 +62,45 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
   const [newName, setNewName] = useState("");
   const [newTypeId, setNewTypeId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showCreateType, setShowCreateType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
+  const [creatingType, setCreatingType] = useState(false);
 
+  const project = getProjectById(projectId);
   const types = getProjectIssueTypes(projectId);
   const selectedForm = forms.find((f) => f.id === selectedFormId) ?? null;
   const properties = getPropertiesForType(selectedForm?.issue_type_id ?? null).filter((p) =>
     PUBLIC_PROPERTY_TYPES.has(p.property_type)
   );
+  const workItemTypesHref = `/${workspaceSlug}/settings/projects/${projectId}/work-item-types`;
 
   const loadForms = async () => {
     setLoading(true);
     try {
       const data = await formService.list(workspaceSlug, projectId);
       setForms(data);
-      if (!selectedFormId && data.length) setSelectedFormId(data[0].id);
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+      setSelectedFormId((current) => {
+        if (current && data.some((form) => form.id === current)) return current;
+        return data[0]?.id ?? null;
+      });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    setShowCreate(false);
+    setNewName("");
+    setNewTypeId("");
+    setShowCreateType(false);
+    setNewTypeName("");
+    setSelectedFormId(null);
     void fetchProjectIssueTypes(workspaceSlug, projectId);
     void loadForms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,8 +112,14 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     }
   }, [selectedForm?.issue_type_id, workspaceSlug, projectId, fetchProperties]);
 
+  // Keep the type picker on a type that belongs to the current project.
   useEffect(() => {
-    if (types.length && !newTypeId) {
+    if (!types.length) {
+      if (newTypeId) setNewTypeId("");
+      return;
+    }
+    const stillValid = types.some((type) => type.id === newTypeId);
+    if (!stillValid) {
       setNewTypeId(types.find((type) => type.is_default)?.id ?? types[0].id);
     }
   }, [types, newTypeId]);
@@ -104,12 +144,54 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     [selectedForm?.form_fields]
   );
 
+  const handleCreateType = async () => {
+    if (!isAdmin || creatingType) return;
+    const name = newTypeName.trim();
+    if (!name) {
+      setToast({ type: "error", title: "Name required", message: "Enter a work item type name." });
+      return;
+    }
+    setCreatingType(true);
+    try {
+      if (project && !project.is_issue_type_enabled) {
+        await updateProject(workspaceSlug, projectId, { is_issue_type_enabled: true });
+      }
+      const type = await createIssueType(workspaceSlug, projectId, { name });
+      setNewTypeId(type.id);
+      setNewTypeName("");
+      setShowCreateType(false);
+      setShowCreate(true);
+      setToast({ type: "success", title: "Success!", message: "Work item type created" });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
+    } finally {
+      setCreatingType(false);
+    }
+  };
+
   const handleCreate = async () => {
-    if (!newName.trim() || !newTypeId || busy) return;
+    if (!isAdmin || busy) return;
+    const name = newName.trim();
+    if (!name) {
+      setToast({ type: "error", title: "Name required", message: "Enter a form name before creating." });
+      return;
+    }
+    if (!newTypeId) {
+      setToast({
+        type: "error",
+        title: "Type required",
+        message: "Create or select a work item type for this form.",
+      });
+      return;
+    }
     setBusy(true);
     try {
       const form = await formService.create(workspaceSlug, projectId, {
-        name: newName.trim(),
+        name,
         issue_type_id: newTypeId,
       });
       setForms((prev) => [form, ...prev]);
@@ -117,8 +199,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
       setNewName("");
       setShowCreate(false);
       setToast({ type: "success", title: "Success!", message: "Form created" });
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     } finally {
       setBusy(false);
     }
@@ -134,8 +220,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     try {
       const updated = await formService.update(workspaceSlug, projectId, selectedForm.id, { is_active: checked });
       setForms((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)));
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -145,8 +235,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
       const updated = await formService.renewAnchor(workspaceSlug, projectId, selectedForm.id);
       setForms((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)));
       setToast({ type: "success", title: "Success!", message: "Public link renewed" });
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -158,8 +252,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
       setForms((prev) => prev.filter((f) => f.id !== selectedForm.id));
       setSelectedFormId(null);
       setToast({ type: "success", title: "Success!", message: "Form deleted" });
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -175,8 +273,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
         sort_order: ((selectedForm.form_fields?.length ?? 0) + 1) * 10000,
       });
       await refreshForm(selectedForm.id);
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -191,8 +293,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
         sort_order: ((selectedForm.form_fields?.length ?? 0) + 1) * 10000,
       });
       await refreshForm(selectedForm.id);
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -201,8 +307,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     try {
       await formService.updateField(workspaceSlug, projectId, selectedForm.id, field.id, patch);
       await refreshForm(selectedForm.id);
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -211,8 +321,12 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     try {
       await formService.destroyField(workspaceSlug, projectId, selectedForm.id, field.id);
       await refreshForm(selectedForm.id);
-    } catch {
-      setToast({ type: "error", title: "Error!", message: t("common.something_went_wrong") });
+    } catch (error) {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: errorMessage(error, t("common.something_went_wrong")),
+      });
     }
   };
 
@@ -226,17 +340,62 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
     }
   };
 
+  const createTypePanel = (
+    <div className="space-y-2 rounded-md border border-dashed border-subtle-1 p-3">
+      <p className="text-xs text-tertiary">Forms are built from a work item type and its custom properties.</p>
+      <Input
+        size="md"
+        surface="field"
+        placeholder="New work item type name"
+        value={newTypeName}
+        onChange={(e) => setNewTypeName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void handleCreateType();
+          }
+        }}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="primary"
+          size="sm"
+          stretch="auto"
+          type="button"
+          onClick={() => void handleCreateType()}
+          disabled={creatingType || !isAdmin}
+          loading={creatingType}
+          label="Create type"
+          icon={<Plus className="size-3.5" />}
+        />
+        <RouterLink to={workItemTypesHref} className="text-xs text-accent-primary hover:underline">
+          Manage types & properties
+        </RouterLink>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return <div className="text-sm text-tertiary">Loading…</div>;
   }
 
   if (!types.length) {
     return (
-      <div className="space-y-2">
-        <SettingsHeading title={t("common.forms")} description="Create shareable forms that create work items." />
+      <div className="space-y-4">
+        <SettingsHeading
+          title={t("common.forms")}
+          description="Create shareable forms that create work items from a work item type."
+        />
         <p className="text-sm text-tertiary">
-          Enable work item types and create at least one type before adding forms.
+          This project has no work item types yet. Create one to start building forms.
         </p>
+        {isAdmin ? (
+          createTypePanel
+        ) : (
+          <RouterLink to={workItemTypesHref} className="text-sm text-accent-primary hover:underline">
+            Open work item types settings
+          </RouterLink>
+        )}
       </div>
     );
   }
@@ -248,50 +407,77 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
         description="Public forms that create work items directly in this project."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h6 className="text-sm font-medium">Forms</h6>
             {isAdmin && (
               <Button
                 variant="secondary"
                 size="sm"
                 stretch="auto"
+                type="button"
                 onClick={() => setShowCreate((v) => !v)}
-                label="New"
+                label={showCreate ? "Cancel" : "New"}
               />
             )}
           </div>
+
           {showCreate && (
-            <div className="space-y-2 rounded-md border border-subtle-1 p-3">
+            <div className="space-y-3 rounded-md border border-subtle-1 p-3">
               <Input
                 size="md"
                 surface="field"
                 placeholder="Form name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleCreate();
+                  }
+                }}
               />
-              <select
-                className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
-                value={newTypeId}
-                onChange={(e) => setNewTypeId(e.target.value)}
-              >
-                {types.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label htmlFor="issue-form-type" className="text-xs font-medium text-secondary">
+                    Work item type
+                  </label>
+                  <button
+                    type="button"
+                    className="text-xs text-accent-primary hover:underline"
+                    onClick={() => setShowCreateType((v) => !v)}
+                  >
+                    {showCreateType ? "Hide" : "New type"}
+                  </button>
+                </div>
+                <select
+                  id="issue-form-type"
+                  className="text-sm w-full rounded-md border border-subtle-1 bg-transparent px-2 py-1.5"
+                  value={newTypeId}
+                  onChange={(e) => setNewTypeId(e.target.value)}
+                >
+                  {types.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {showCreateType && createTypePanel}
               <Button
                 variant="primary"
                 size="sm"
                 stretch="auto"
+                type="button"
                 onClick={() => void handleCreate()}
                 disabled={busy}
+                loading={busy}
                 label="Create"
               />
             </div>
           )}
+
           <ul className="space-y-1">
             {forms.map((form) => (
               <li key={form.id}>
@@ -309,6 +495,10 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
             ))}
             {!forms.length && <li className="text-sm text-tertiary">No forms yet</li>}
           </ul>
+
+          <RouterLink to={workItemTypesHref} className="text-xs inline-flex text-accent-primary hover:underline">
+            Manage work item types
+          </RouterLink>
         </aside>
 
         {selectedForm ? (
@@ -328,6 +518,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                 variant="secondary"
                 size="sm"
                 stretch="auto"
+                type="button"
                 onClick={() => void copyLink()}
                 label="Copy link"
                 icon={<Copy className="size-3.5" />}
@@ -346,6 +537,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                     variant="secondary"
                     size="sm"
                     stretch="auto"
+                    type="button"
                     onClick={() => void handleRenewAnchor()}
                     label="Renew link"
                     icon={<RefreshCw className="size-3.5" />}
@@ -354,6 +546,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                     variant="secondary"
                     size="sm"
                     stretch="auto"
+                    type="button"
                     onClick={() => void handleDelete()}
                     label="Delete"
                     icon={<Trash2 className="size-3.5" />}
@@ -430,6 +623,7 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                         variant="secondary"
                         size="sm"
                         stretch="auto"
+                        type="button"
                         disabled={usedCoreKeys.has(option.key)}
                         onClick={() => void handleAddCoreField(option.key)}
                         label={option.label}
@@ -446,13 +640,19 @@ export const IssueFormsRoot = observer(function IssueFormsRoot(props: Props) {
                         variant="secondary"
                         size="sm"
                         stretch="auto"
+                        type="button"
                         disabled={usedCustomPropertyIds.has(property.id)}
                         onClick={() => void handleAddCustomField(property)}
                         label={property.name}
                       />
                     ))}
                     {!properties.length && (
-                      <p className="text-xs text-tertiary">No compatible custom properties on this type.</p>
+                      <p className="text-xs text-tertiary">
+                        No compatible custom properties on this type.{" "}
+                        <RouterLink to={workItemTypesHref} className="text-accent-primary hover:underline">
+                          Add properties
+                        </RouterLink>
+                      </p>
                     )}
                   </div>
                 </div>

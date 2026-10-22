@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Prioritate modificată",
+        "label_changed": "Etichetă modificată",
+        "comment_added": "Comentariu adăugat",
+        "name_changed": "Nume modificat"
+      },
+      "config": {
+        "any": "Oricare",
+        "from_state": "Din stare",
+        "to_state": "În stare",
+        "assignee_added": "Responsabil adăugat",
+        "from_priority": "Din prioritate",
+        "to_priority": "În prioritate",
+        "label_added": "Etichetă adăugată",
+        "pick_project_for_states": "Alegeți un proiect mai sus pentru a selecta stările acestuia."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Responsabil",
+        "name_contains": "Numele conține",
+        "issue_type": "Tip de work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Schimbă proprietatea",
         "run_script": "Rulează script",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Creează work item"
       },
       "configuration": {
         "label": "Configurare",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Dezactivează automatizarea înainte de a-i șterge singura acțiune."
+      },
+      "create_work_item": {
+        "name_placeholder": "Titlul work item (opțional)",
+        "project_placeholder": "Selectați un proiect"
       }
     },
     "conjunctions": {

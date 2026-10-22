@@ -14,23 +14,33 @@ class WorkspaceAutomationTriggerType(models.TextChoices):
     ISSUE_CREATED = "issue_created", "Issue created"
     STATE_CHANGED = "state_changed", "State changed"
     ASSIGNEE_CHANGED = "assignee_changed", "Assignee changed"
+    PRIORITY_CHANGED = "priority_changed", "Priority changed"
+    LABEL_CHANGED = "label_changed", "Label changed"
+    COMMENT_ADDED = "comment_added", "Comment added"
+    NAME_CHANGED = "name_changed", "Name changed"
 
 
 class WorkspaceAutomationConditionField(models.TextChoices):
     STATE = "state", "State"
     PRIORITY = "priority", "Priority"
     LABEL = "label", "Label"
+    ASSIGNEE = "assignee", "Assignee"
+    NAME_CONTAINS = "name_contains", "Name contains"
+    ISSUE_TYPE = "issue_type", "Issue type"
 
 
 class WorkspaceAutomationConditionOperator(models.TextChoices):
     IS = "is", "Is"
     IS_ANY_OF = "is_any_of", "Is any of"
+    CONTAINS = "contains", "Contains"
 
 
 class WorkspaceAutomationActionType(models.TextChoices):
     CHANGE_STATE = "change_state", "Change state"
     ASSIGN = "assign", "Assign"
     ADD_COMMENT = "add_comment", "Add comment"
+    CREATE_WORK_ITEM = "create_work_item", "Create work item"
+    CHANGE_PROPERTY = "change_property", "Change property"
 
 
 class WorkspaceAutomationRunStatus(models.TextChoices):
@@ -53,7 +63,7 @@ class WorkspaceAutomation(BaseModel):
     )
     # Optional trigger filters, e.g. {"to_state_id": "...", "from_state_id": "..."}
     trigger_config = models.JSONField(default=dict, blank=True)
-    # Empty list means all projects in the workspace
+    # Empty list means all projects in the workspace; single id = one project
     project_ids = models.JSONField(default=list, blank=True)
 
     class Meta:

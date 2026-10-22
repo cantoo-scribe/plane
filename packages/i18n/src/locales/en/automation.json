@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item created",
         "state_changed": "State changed",
-        "assignee_changed": "Assignee changed"
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Priority changed",
+        "label_changed": "Label changed",
+        "comment_added": "Comment added",
+        "name_changed": "Name changed"
+      },
+      "config": {
+        "any": "Any",
+        "from_state": "From state",
+        "to_state": "To state",
+        "assignee_added": "Assignee added",
+        "from_priority": "From priority",
+        "to_priority": "To priority",
+        "label_added": "Label added",
+        "pick_project_for_states": "Pick a project above to choose from its states."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "State",
         "priority": "Priority",
-        "label": "Label"
+        "label": "Label",
+        "assignee": "Assignee",
+        "name_contains": "Name contains",
+        "issue_type": "Work item type"
       }
     },
     "action": {
@@ -84,7 +101,12 @@
         "change_property": "Change property",
         "run_script": "Run Script",
         "change_state": "Change state",
-        "assign": "Assign"
+        "assign": "Assign",
+        "create_work_item": "Create work item"
+      },
+      "create_work_item": {
+        "name_placeholder": "Work item title (optional)",
+        "project_placeholder": "Select a project"
       },
       "configuration": {
         "label": "Configuration",

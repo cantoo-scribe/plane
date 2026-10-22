@@ -60,7 +60,21 @@
       "options": {
         "issue_created": "Work item создан",
         "state_changed": "Статус изменён",
-        "assignee_changed": "Исполнитель изменён"
+        "assignee_changed": "Исполнитель изменён",
+        "priority_changed": "Приоритет изменён",
+        "label_changed": "Метка изменена",
+        "comment_added": "Комментарий добавлен",
+        "name_changed": "Название изменено"
+      },
+      "config": {
+        "any": "Любой",
+        "from_state": "Из состояния",
+        "to_state": "В состояние",
+        "assignee_added": "Добавлен исполнитель",
+        "from_priority": "Из приоритета",
+        "to_priority": "В приоритет",
+        "label_added": "Добавлена метка",
+        "pick_project_for_states": "Выберите проект выше, чтобы выбрать его состояния."
       }
     },
     "condition": {
@@ -70,7 +84,10 @@
       "fields": {
         "state": "Статус",
         "priority": "Приоритет",
-        "label": "Метка"
+        "label": "Метка",
+        "assignee": "Исполнитель",
+        "name_contains": "Название содержит",
+        "issue_type": "Тип work item"
       }
     },
     "action": {
@@ -84,7 +101,8 @@
         "change_property": "Изменить свойство",
         "run_script": "Запустить скрипт",
         "change_state": "Изменить статус",
-        "assign": "Назначить"
+        "assign": "Назначить",
+        "create_work_item": "Создать work item"
       },
       "configuration": {
         "label": "Конфигурация",
@@ -113,6 +131,10 @@
       },
       "validation": {
         "delete_only_action": "Отключите автоматизацию перед удалением её единственного действия."
+      },
+      "create_work_item": {
+        "name_placeholder": "Название work item (необязательно)",
+        "project_placeholder": "Выберите проект"
       }
     },
     "conjunctions": {
