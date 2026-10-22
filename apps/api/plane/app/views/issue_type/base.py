@@ -17,15 +17,32 @@ from plane.app.views.base import BaseViewSet
 from plane.db.models import Issue, IssueType, Project, ProjectIssueType, Workspace
 
 
+def _project_uses_workspace_types(project: Project) -> bool:
+    return project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE
+
+
 class IssueTypeViewSet(BaseViewSet):
     serializer_class = IssueTypeSerializer
     model = IssueType
 
+    def _get_project(self, slug, project_id):
+        return Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+
     def get_queryset(self):
         project_id = self.kwargs.get("project_id")
+        project = self._get_project(self.kwargs.get("slug"), project_id)
+        base = IssueType.objects.filter(workspace__slug=self.kwargs.get("slug"))
+
+        if project and _project_uses_workspace_types(project):
+            return base.prefetch_related(
+                Prefetch(
+                    "project_issue_types",
+                    queryset=ProjectIssueType.objects.filter(project_id=project_id),
+                )
+            ).distinct()
+
         return (
-            IssueType.objects.filter(workspace__slug=self.kwargs.get("slug"))
-            .filter(project_issue_types__project_id=project_id)
+            base.filter(project_issue_types__project_id=project_id)
             .filter(
                 project_issue_types__project__project_projectmember__member=self.request.user,
                 project_issue_types__project__project_projectmember__is_active=True,
@@ -44,6 +61,17 @@ class IssueTypeViewSet(BaseViewSet):
         context["project_id"] = self.kwargs.get("project_id")
         return context
 
+    def _reject_if_workspace_mode(self, project):
+        if project and _project_uses_workspace_types(project):
+            return Response(
+                {
+                    "error": "This project uses the workspace work item type configuration. "
+                    "Edit types in workspace settings, or switch the project to a custom configuration."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
         queryset = self.get_queryset()
@@ -55,7 +83,9 @@ class IssueTypeViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def retrieve(self, request, slug, project_id, pk):
-        issue_type = self.get_queryset().get(pk=pk)
+        issue_type = self.get_queryset().filter(pk=pk).first()
+        if not issue_type:
+            return Response({"error": "Work item type not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = IssueTypeSerializer(issue_type, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -64,6 +94,9 @@ class IssueTypeViewSet(BaseViewSet):
         try:
             workspace = Workspace.objects.get(slug=slug)
             project = Project.objects.get(pk=project_id, workspace=workspace)
+            blocked = self._reject_if_workspace_mode(project)
+            if blocked:
+                return blocked
 
             with transaction.atomic():
                 name = (request.data.get("name") or "").strip()
@@ -86,9 +119,16 @@ class IssueTypeViewSet(BaseViewSet):
                     is_default=is_first_type,
                     level=request.data.get("level", 0),
                 )
+                update_fields = []
                 if not project.is_issue_type_enabled:
                     project.is_issue_type_enabled = True
-                    project.save(update_fields=["is_issue_type_enabled", "updated_at"])
+                    update_fields.append("is_issue_type_enabled")
+                if project.issue_type_source != Project.ISSUE_TYPE_SOURCE_CUSTOM:
+                    project.issue_type_source = Project.ISSUE_TYPE_SOURCE_CUSTOM
+                    update_fields.append("issue_type_source")
+                if update_fields:
+                    update_fields.append("updated_at")
+                    project.save(update_fields=update_fields)
 
             issue_type = self.get_queryset().get(pk=issue_type.id)
             serializer = IssueTypeSerializer(issue_type, context=self.get_serializer_context())
@@ -102,6 +142,11 @@ class IssueTypeViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN])
     def partial_update(self, request, slug, project_id, pk):
         try:
+            project = self._get_project(slug, project_id)
+            blocked = self._reject_if_workspace_mode(project)
+            if blocked:
+                return blocked
+
             issue_type = self.get_queryset().get(pk=pk)
             updatable = ["name", "description", "logo_props", "is_active"]
             for field in updatable:
@@ -131,6 +176,11 @@ class IssueTypeViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def mark_as_default(self, request, slug, project_id, pk):
+        project = self._get_project(slug, project_id)
+        blocked = self._reject_if_workspace_mode(project)
+        if blocked:
+            return blocked
+
         issue_type = self.get_queryset().filter(pk=pk).first()
         if not issue_type:
             return Response({"error": "Work item type not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -154,6 +204,11 @@ class IssueTypeViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def destroy(self, request, slug, project_id, pk):
+        project = self._get_project(slug, project_id)
+        blocked = self._reject_if_workspace_mode(project)
+        if blocked:
+            return blocked
+
         pit = ProjectIssueType.objects.filter(
             project_id=project_id,
             issue_type_id=pk,
@@ -176,7 +231,6 @@ class IssueTypeViewSet(BaseViewSet):
 
         issue_type = pit.issue_type
         pit.delete()
-        # Soft-delete the type if it is no longer linked to any project
         if not ProjectIssueType.objects.filter(issue_type_id=pk).exists():
             issue_type.delete()
 

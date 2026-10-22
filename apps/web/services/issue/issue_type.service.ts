@@ -19,6 +19,64 @@ export class IssueTypeService extends APIService {
     super(API_BASE_URL);
   }
 
+  async fetchWorkspaceIssueTypes(workspaceSlug: string): Promise<TIssueType[]> {
+    const { data } = await this.get(`/api/workspaces/${workspaceSlug}/issue-types/`);
+    return data;
+  }
+
+  async createWorkspaceIssueType(workspaceSlug: string, payload: Partial<TIssueType>): Promise<TIssueType> {
+    const { data } = await this.post(`/api/workspaces/${workspaceSlug}/issue-types/`, payload);
+    return data;
+  }
+
+  async updateWorkspaceIssueType(
+    workspaceSlug: string,
+    typeId: string,
+    payload: Partial<TIssueType>
+  ): Promise<TIssueType> {
+    const { data } = await this.patch(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/`, payload);
+    return data;
+  }
+
+  async deleteWorkspaceIssueType(workspaceSlug: string, typeId: string): Promise<void> {
+    await this.delete(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/`);
+  }
+
+  async markWorkspaceIssueTypeAsDefault(workspaceSlug: string, typeId: string): Promise<void> {
+    await this.post(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/mark-default/`);
+  }
+
+  async fetchWorkspaceProperties(workspaceSlug: string, typeId: string): Promise<TIssueCustomProperty[]> {
+    const { data } = await this.get(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/properties/`);
+    return data;
+  }
+
+  async createWorkspaceProperty(
+    workspaceSlug: string,
+    typeId: string,
+    payload: Partial<TIssueCustomProperty> & { options?: Partial<TIssueCustomPropertyOption>[] }
+  ): Promise<TIssueCustomProperty> {
+    const { data } = await this.post(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/properties/`, payload);
+    return data;
+  }
+
+  async updateWorkspaceProperty(
+    workspaceSlug: string,
+    typeId: string,
+    propertyId: string,
+    payload: Partial<TIssueCustomProperty>
+  ): Promise<TIssueCustomProperty> {
+    const { data } = await this.patch(
+      `/api/workspaces/${workspaceSlug}/issue-types/${typeId}/properties/${propertyId}/`,
+      payload
+    );
+    return data;
+  }
+
+  async deleteWorkspaceProperty(workspaceSlug: string, typeId: string, propertyId: string): Promise<void> {
+    await this.delete(`/api/workspaces/${workspaceSlug}/issue-types/${typeId}/properties/${propertyId}/`);
+  }
+
   async fetchProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<TIssueType[]> {
     const { data } = await this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`);
     return data;

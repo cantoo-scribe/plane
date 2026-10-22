@@ -4,6 +4,22 @@
     "label_lowercase": "типи робочих елементів",
     "settings": {
       "description": "Налаштовуйте та додавайте власні властивості, щоб адаптувати їх до потреб вашої команди.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Неможливо видалити цей тип робочого елемента, оскільки він встановлений як тип за замовчуванням для цього проджекту.",
       "set_as_default": "Встановити за замовчуванням",
       "cant_set_default_inactive_message": "Активуйте цей тип перед встановленням за замовчуванням",

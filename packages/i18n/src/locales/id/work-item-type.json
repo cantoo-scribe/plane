@@ -4,6 +4,22 @@
     "label_lowercase": "tipe item kerja",
     "settings": {
       "description": "Sesuaikan dan tambahkan properti Anda sendiri untuk menyesuaikannya dengan kebutuhan tim Anda.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Jenis item kerja ini tidak dapat dihapus karena diatur sebagai default untuk proyek ini.",
       "set_as_default": "Atur sebagai default",
       "cant_set_default_inactive_message": "Aktifkan tipe ini sebelum mengaturnya sebagai default",

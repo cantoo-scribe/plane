@@ -302,6 +302,10 @@ export const coreRoutes: RouteConfigEntry[] = [
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/[webhookId]/page.tsx"
           ),
           route(
+            ":workspaceSlug/settings/work-item-types",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/work-item-types/page.tsx"
+          ),
+          route(
             ":workspaceSlug/settings/automations",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/automations/page.tsx"
           ),

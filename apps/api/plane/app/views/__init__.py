@@ -254,9 +254,11 @@ from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
 from .timezone.base import TimezoneEndpoint
 
 from .issue_type.base import IssueTypeViewSet
+from .issue_type.workspace import WorkspaceIssueTypeViewSet
 from .issue_custom_property.base import (
     IssueCustomPropertyOptionViewSet,
     IssueCustomPropertyValueEndpoint,
     IssueCustomPropertyViewSet,
 )
+from .issue_custom_property.workspace import WorkspaceIssueCustomPropertyViewSet
 from .issue_form import IssueFormFieldViewSet, IssueFormViewSet

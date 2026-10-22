@@ -4,6 +4,22 @@
     "label_lowercase": "loại mục công việc",
     "settings": {
       "description": "Tùy chỉnh và thêm thuộc tính riêng của bạn để điều chỉnh theo nhu cầu của nhóm.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Không thể xóa loại hạng mục công việc này vì nó đang được liên kết với các hạng mục công việc hiện có.",
       "set_as_default": "Đặt làm mặc định",
       "cant_set_default_inactive_message": "Kích hoạt loại này trước khi đặt làm mặc định",

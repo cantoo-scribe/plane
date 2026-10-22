@@ -4,6 +4,22 @@
     "label_lowercase": "types d'éléments de travail",
     "settings": {
       "description": "Personnalisez et ajoutez vos propres propriétés pour l’adapter aux besoins de votre équipe.",
+      "workspace": {
+        "description": "Définissez les types d’éléments de travail et les propriétés personnalisées partagés par les projets qui utilisent la configuration de l’espace de travail."
+      },
+      "source": {
+        "title": "Source de configuration",
+        "workspace": {
+          "label": "Utiliser la configuration de l’espace de travail",
+          "description": "Hériter des types et propriétés des réglages de l’espace de travail. Les changements s’appliquent à ce projet.",
+          "manage_hint": "Gérer le catalogue partagé dans les",
+          "manage_link": "réglages de l’espace de travail"
+        },
+        "custom": {
+          "label": "Configuration personnalisée pour ce projet",
+          "description": "Créer et modifier des types et propriétés qui s’appliquent uniquement à ce projet."
+        }
+      },
       "cant_delete_default_message": "Ce type d'élément de travail ne peut pas être supprimé car il est défini comme le type par défaut pour ce projet.",
       "set_as_default": "Définir par défaut",
       "cant_set_default_inactive_message": "Activez ce type avant de le définir par défaut",

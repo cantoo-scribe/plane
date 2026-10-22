@@ -4,6 +4,22 @@
     "label_lowercase": "типы рабочих элементов",
     "settings": {
       "description": "Настраивайте и добавляйте свои собственные свойства, чтобы адаптировать их к потребностям вашей команды.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Невозможно удалить этот тип рабочего элемента, так как он установлен как тип по умолчанию для этого проекта.",
       "set_as_default": "Установить по умолчанию",
       "cant_set_default_inactive_message": "Активируйте этот тип перед установкой по умолчанию",

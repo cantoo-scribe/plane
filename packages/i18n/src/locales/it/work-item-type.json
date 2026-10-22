@@ -4,6 +4,22 @@
     "label_lowercase": "tipi di elementi di lavoro",
     "settings": {
       "description": "Personalizza e aggiungi le tue proprietà per adattarle alle esigenze del tuo team.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Il tipo di elemento di lavoro non può essere eliminato perché è impostato come tipo predefinito per questo progetto.",
       "set_as_default": "Imposta come predefinito",
       "cant_set_default_inactive_message": "Attiva questo tipo prima di impostarlo come predefinito",

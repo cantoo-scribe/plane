@@ -27,7 +27,7 @@ const PROPERTY_TYPES: TIssueCustomPropertyType[] = [
 
 type Props = {
   workspaceSlug: string;
-  projectId: string;
+  projectId?: string;
   typeId: string;
   property?: TIssueCustomProperty;
   onClose: () => void;
@@ -37,7 +37,8 @@ type Props = {
 export const CustomPropertyForm = observer(function CustomPropertyForm(props: Props) {
   const { workspaceSlug, projectId, typeId, property, onClose, onSuccess } = props;
   const { t } = useTranslation();
-  const { createProperty, updateProperty } = useIssueType();
+  const { createProperty, updateProperty, createWorkspaceProperty, updateWorkspaceProperty } = useIssueType();
+  const isWorkspaceScope = !projectId;
 
   const [name, setName] = useState(property?.name ?? "");
   const [description, setDescription] = useState(property?.description ?? "");
@@ -62,12 +63,21 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
         propertyType === "FORMULA" ? { formula } : propertyType === "TEXT" ? { is_multi_line: false } : {};
 
       if (property) {
-        await updateProperty(workspaceSlug, projectId, typeId, property.id, {
-          name: name.trim(),
-          description,
-          is_required: isRequired,
-          settings: { ...property.settings, ...settings },
-        });
+        if (isWorkspaceScope) {
+          await updateWorkspaceProperty(workspaceSlug, typeId, property.id, {
+            name: name.trim(),
+            description,
+            is_required: isRequired,
+            settings: { ...property.settings, ...settings },
+          });
+        } else {
+          await updateProperty(workspaceSlug, projectId!, typeId, property.id, {
+            name: name.trim(),
+            description,
+            is_required: isRequired,
+            settings: { ...property.settings, ...settings },
+          });
+        }
       } else {
         const options =
           propertyType === "DROPDOWN"
@@ -77,14 +87,19 @@ export const CustomPropertyForm = observer(function CustomPropertyForm(props: Pr
                 .filter(Boolean)
                 .map((optName, index) => ({ name: optName, sort_order: index * 10000 }))
             : undefined;
-        await createProperty(workspaceSlug, projectId, typeId, {
+        const payload = {
           name: name.trim(),
           description,
           property_type: propertyType,
           is_required: isRequired,
           settings,
           options,
-        });
+        };
+        if (isWorkspaceScope) {
+          await createWorkspaceProperty(workspaceSlug, typeId, payload);
+        } else {
+          await createProperty(workspaceSlug, projectId!, typeId, payload);
+        }
       }
       setToast({
         type: "success",

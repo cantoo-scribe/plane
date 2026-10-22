@@ -97,6 +97,18 @@ class Project(BaseModel):
     intake_view = models.BooleanField(default=False)
     is_time_tracking_enabled = models.BooleanField(default=False)
     is_issue_type_enabled = models.BooleanField(default=False)
+    # WORKSPACE: inherit types from the workspace catalog; CUSTOM: project-local types
+    ISSUE_TYPE_SOURCE_WORKSPACE = "WORKSPACE"
+    ISSUE_TYPE_SOURCE_CUSTOM = "CUSTOM"
+    ISSUE_TYPE_SOURCE_CHOICES = (
+        (ISSUE_TYPE_SOURCE_WORKSPACE, "Workspace"),
+        (ISSUE_TYPE_SOURCE_CUSTOM, "Custom"),
+    )
+    issue_type_source = models.CharField(
+        max_length=20,
+        choices=ISSUE_TYPE_SOURCE_CHOICES,
+        default=ISSUE_TYPE_SOURCE_WORKSPACE,
+    )
     # Teamspace / pôle: same Project model, shown separately in the sidebar
     is_teamspace = models.BooleanField(default=False)
     # OKR container: same Project model, third sidebar section (mutually exclusive with is_teamspace)

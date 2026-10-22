@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
+import Link from "next/link";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
@@ -15,43 +16,71 @@ import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-it
 import { SettingsHeading } from "@/components/settings/heading";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useProject } from "@/hooks/store/use-project";
+import { useWorkspace } from "@/hooks/store/use-workspace";
 import { CustomPropertyForm } from "./property-form";
 
-type Props = {
+type ProjectProps = {
+  scope: "project";
   workspaceSlug: string;
   projectId: string;
   isAdmin: boolean;
 };
 
+type WorkspaceProps = {
+  scope: "workspace";
+  workspaceSlug: string;
+  isAdmin: boolean;
+};
+
+type Props = ProjectProps | WorkspaceProps;
+
 export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Props) {
-  const { workspaceSlug, projectId, isAdmin } = props;
+  const { workspaceSlug, isAdmin, scope } = props;
+  const projectId = scope === "project" ? props.projectId : undefined;
   const { t } = useTranslation();
   const { getProjectById, updateProject } = useProject();
+  const { currentWorkspace } = useWorkspace();
   const {
     getProjectIssueTypes,
+    getWorkspaceIssueTypes,
     getPropertiesForType,
     fetchProjectIssueTypes,
+    fetchWorkspaceIssueTypes,
     fetchProperties,
+    fetchWorkspaceProperties,
     createIssueType,
+    createWorkspaceIssueType,
     deleteIssueType,
+    deleteWorkspaceIssueType,
     markAsDefault,
+    markWorkspaceIssueTypeAsDefault,
     deleteProperty,
+    deleteWorkspaceProperty,
   } = useIssueType();
 
-  const project = getProjectById(projectId);
-  const types = getProjectIssueTypes(projectId);
+  const project = projectId ? getProjectById(projectId) : undefined;
+  const issueTypeSource = project?.issue_type_source ?? "WORKSPACE";
+  const usesWorkspaceConfig = scope === "project" && issueTypeSource === "WORKSPACE";
+  const isEditable = scope === "workspace" || (scope === "project" && issueTypeSource === "CUSTOM");
+
+  const types = scope === "workspace" ? getWorkspaceIssueTypes(currentWorkspace?.id) : getProjectIssueTypes(projectId);
+
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [showTypeForm, setShowTypeForm] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState(false);
+  const [isUpdatingSource, setIsUpdatingSource] = useState(false);
 
   useEffect(() => {
-    if (workspaceSlug && projectId) {
-      void fetchProjectIssueTypes(workspaceSlug, projectId);
+    if (!workspaceSlug) return;
+    if (scope === "workspace") {
+      void fetchWorkspaceIssueTypes(workspaceSlug);
+      return;
     }
-  }, [workspaceSlug, projectId, fetchProjectIssueTypes]);
+    if (projectId) void fetchProjectIssueTypes(workspaceSlug, projectId);
+  }, [workspaceSlug, projectId, scope, fetchProjectIssueTypes, fetchWorkspaceIssueTypes]);
 
   useEffect(() => {
     if (types.length && !selectedTypeId) {
@@ -60,17 +89,20 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
   }, [types, selectedTypeId]);
 
   useEffect(() => {
-    if (workspaceSlug && projectId && selectedTypeId) {
-      void fetchProperties(workspaceSlug, projectId, selectedTypeId);
+    if (!workspaceSlug || !selectedTypeId) return;
+    if (scope === "workspace" || usesWorkspaceConfig) {
+      void fetchWorkspaceProperties(workspaceSlug, selectedTypeId);
+      return;
     }
-  }, [workspaceSlug, projectId, selectedTypeId, fetchProperties]);
+    if (projectId) void fetchProperties(workspaceSlug, projectId, selectedTypeId);
+  }, [workspaceSlug, projectId, selectedTypeId, scope, usesWorkspaceConfig, fetchProperties, fetchWorkspaceProperties]);
 
   const properties = getPropertiesForType(selectedTypeId);
   const editingProperty = editingPropertyId ? properties.find((p) => p.id === editingPropertyId) : undefined;
   const selectedType = selectedTypeId ? types.find((type) => type.id === selectedTypeId) : undefined;
 
   const handleEnableTypes = async (checked: boolean) => {
-    if (!project || !isAdmin || isToggling) return;
+    if (!project || !projectId || !isAdmin || isToggling) return;
     setIsToggling(true);
     try {
       await updateProject(workspaceSlug, projectId, {
@@ -87,10 +119,34 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
     }
   };
 
+  const handleSourceChange = async (source: "WORKSPACE" | "CUSTOM") => {
+    if (!project || !projectId || !isAdmin || isUpdatingSource || source === issueTypeSource) return;
+    setIsUpdatingSource(true);
+    try {
+      await updateProject(workspaceSlug, projectId, { issue_type_source: source });
+      setSelectedTypeId(null);
+      setShowTypeForm(false);
+      setShowPropertyForm(false);
+      setEditingPropertyId(null);
+      await fetchProjectIssueTypes(workspaceSlug, projectId);
+    } catch {
+      setToast({
+        type: "error",
+        title: "Error!",
+        message: t("common.something_went_wrong"),
+      });
+    } finally {
+      setIsUpdatingSource(false);
+    }
+  };
+
   const handleCreateType = async () => {
     if (!newTypeName.trim()) return;
     try {
-      const type = await createIssueType(workspaceSlug, projectId, { name: newTypeName.trim() });
+      const type =
+        scope === "workspace"
+          ? await createWorkspaceIssueType(workspaceSlug, { name: newTypeName.trim() })
+          : await createIssueType(workspaceSlug, projectId!, { name: newTypeName.trim() });
       setSelectedTypeId(type.id);
       setNewTypeName("");
       setShowTypeForm(false);
@@ -108,29 +164,137 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
     }
   };
 
+  const handleMarkDefault = async (typeId: string) => {
+    if (scope === "workspace") {
+      await markWorkspaceIssueTypeAsDefault(workspaceSlug, typeId);
+      return;
+    }
+    await markAsDefault(workspaceSlug, projectId!, typeId);
+  };
+
+  const handleDeleteType = async (typeId: string) => {
+    if (scope === "workspace") {
+      await deleteWorkspaceIssueType(workspaceSlug, typeId);
+    } else {
+      await deleteIssueType(workspaceSlug, projectId!, typeId);
+    }
+    if (selectedTypeId === typeId) setSelectedTypeId(null);
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    if (!selectedTypeId) return;
+    if (scope === "workspace") {
+      await deleteWorkspaceProperty(workspaceSlug, selectedTypeId, propertyId);
+      return;
+    }
+    await deleteProperty(workspaceSlug, projectId!, selectedTypeId, propertyId);
+  };
+
+  const showCatalog = scope === "workspace" || Boolean(project?.is_issue_type_enabled);
+
   return (
     <div className="flex flex-col gap-6">
-      <SettingsHeading title={t("work_item_types.label")} description={t("work_item_types.settings.description")} />
-
-      <SettingsBoxedControlItem
-        title={t("work_item_types.empty_state.enable.title")}
-        description={t("work_item_types.empty_state.enable.description")}
-        control={
-          <Switch
-            size="sm"
-            checked={Boolean(project?.is_issue_type_enabled)}
-            onCheckedChange={handleEnableTypes}
-            disabled={!isAdmin || isToggling}
-          />
+      <SettingsHeading
+        title={t("work_item_types.label")}
+        description={
+          scope === "workspace"
+            ? t("work_item_types.settings.workspace.description")
+            : t("work_item_types.settings.description")
         }
       />
 
-      {project?.is_issue_type_enabled && (
+      {scope === "project" && (
+        <>
+          <SettingsBoxedControlItem
+            title={t("work_item_types.empty_state.enable.title")}
+            description={t("work_item_types.empty_state.enable.description")}
+            control={
+              <Switch
+                size="sm"
+                checked={Boolean(project?.is_issue_type_enabled)}
+                onCheckedChange={handleEnableTypes}
+                disabled={!isAdmin || isToggling}
+              />
+            }
+          />
+
+          {project?.is_issue_type_enabled && (
+            <div className="flex flex-col gap-3 rounded-lg border border-subtle bg-layer-2 p-4">
+              <div className="text-body-sm-medium text-primary">{t("work_item_types.settings.source.title")}</div>
+              <div
+                className="flex flex-col gap-2"
+                role="radiogroup"
+                aria-label={t("work_item_types.settings.source.title")}
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={issueTypeSource === "WORKSPACE"}
+                  disabled={!isAdmin || isUpdatingSource}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border border-subtle px-3 py-2.5 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void handleSourceChange("WORKSPACE")}
+                >
+                  <span
+                    className={`mt-1 size-3.5 shrink-0 rounded-full border ${
+                      issueTypeSource === "WORKSPACE" ? "bg-accent-strong border-accent-strong" : "border-subtle"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="block text-body-sm-medium text-primary">
+                      {t("work_item_types.settings.source.workspace.label")}
+                    </span>
+                    <span className="block text-caption-md-regular text-tertiary">
+                      {t("work_item_types.settings.source.workspace.description")}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={issueTypeSource === "CUSTOM"}
+                  disabled={!isAdmin || isUpdatingSource}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border border-subtle px-3 py-2.5 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void handleSourceChange("CUSTOM")}
+                >
+                  <span
+                    className={`mt-1 size-3.5 shrink-0 rounded-full border ${
+                      issueTypeSource === "CUSTOM" ? "bg-accent-strong border-accent-strong" : "border-subtle"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="block text-body-sm-medium text-primary">
+                      {t("work_item_types.settings.source.custom.label")}
+                    </span>
+                    <span className="block text-caption-md-regular text-tertiary">
+                      {t("work_item_types.settings.source.custom.description")}
+                    </span>
+                  </span>
+                </button>
+              </div>
+              {usesWorkspaceConfig && (
+                <p className="text-caption-md-regular text-tertiary">
+                  {t("work_item_types.settings.source.workspace.manage_hint")}{" "}
+                  <Link
+                    href={`/${workspaceSlug}/settings/work-item-types/`}
+                    className="text-accent-primary hover:underline"
+                  >
+                    {t("work_item_types.settings.source.workspace.manage_link")}
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {showCatalog && (
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-4">
             <div className="flex items-center justify-between gap-3">
               <SettingsHeading title={t("work_item_types.settings.types.title")} variant="h6" />
-              {isAdmin && !showTypeForm && (
+              {isAdmin && isEditable && !showTypeForm && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -141,7 +305,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
               )}
             </div>
 
-            {showTypeForm && (
+            {showTypeForm && isEditable && (
               <div className="flex flex-col gap-3 rounded-lg border border-subtle bg-layer-2 p-4">
                 <Input
                   size="md"
@@ -196,14 +360,14 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                       <span className="ml-1.5 text-caption-md-regular text-tertiary">({t("common.default")})</span>
                     ) : null}
                   </span>
-                  {isAdmin && !type.is_default && (
+                  {isAdmin && isEditable && !type.is_default && (
                     <span className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         className="text-caption-md-regular text-tertiary hover:text-primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          void markAsDefault(workspaceSlug, projectId, type.id);
+                          void handleMarkDefault(type.id);
                         }}
                       >
                         {t("work_item_types.settings.set_as_default")}
@@ -213,10 +377,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                         className="text-caption-md-regular text-tertiary hover:text-danger-primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          void deleteIssueType(workspaceSlug, projectId, type.id).then(() => {
-                            if (selectedTypeId === type.id) setSelectedTypeId(null);
-                            return undefined;
-                          });
+                          void handleDeleteType(type.id);
                         }}
                       >
                         {t("common.delete")}
@@ -248,7 +409,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                   {t("work_item_types.settings.properties.description")}
                 </p>
               </div>
-              {isAdmin && selectedTypeId && !showPropertyForm && !editingProperty && (
+              {isAdmin && isEditable && selectedTypeId && !showPropertyForm && !editingProperty && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -262,7 +423,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
               )}
             </div>
 
-            {(showPropertyForm || editingProperty) && selectedTypeId && (
+            {(showPropertyForm || editingProperty) && selectedTypeId && isEditable && (
               <CustomPropertyForm
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
@@ -294,7 +455,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                       )}
                     </div>
                   </div>
-                  {isAdmin && (
+                  {isAdmin && isEditable && (
                     <div className="flex shrink-0 items-center gap-3">
                       <button
                         type="button"
@@ -309,10 +470,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                       <button
                         type="button"
                         className="text-caption-md-regular text-tertiary hover:text-danger-primary"
-                        onClick={() => {
-                          if (!selectedTypeId) return;
-                          void deleteProperty(workspaceSlug, projectId, selectedTypeId, prop.id);
-                        }}
+                        onClick={() => void handleDeleteProperty(prop.id)}
                       >
                         {t("common.delete")}
                       </button>
@@ -328,7 +486,7 @@ export const WorkItemTypesRoot = observer(function WorkItemTypesRoot(props: Prop
                   <div className="mt-1 text-caption-md-regular text-tertiary">
                     {t("work_item_types.settings.properties.empty_state.description")}
                   </div>
-                  {isAdmin && (
+                  {isAdmin && isEditable && (
                     <div className="mt-4 flex justify-center">
                       <Button
                         variant="primary"

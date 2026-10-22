@@ -4,6 +4,22 @@
     "label_lowercase": "工作项类型",
     "settings": {
       "description": "自定义并添加您自己的属性以适应团队需求。",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "无法删除此工作项类型，因为它已设置为该项目的默认类型。",
       "set_as_default": "设为默认",
       "cant_set_default_inactive_message": "请先激活此类型再将其设为默认",

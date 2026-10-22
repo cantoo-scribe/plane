@@ -23,11 +23,30 @@ export interface IIssueTypeStore {
   fetchedTypesMap: Record<string, boolean>;
   fetchedPropertiesMap: Record<string, boolean>;
   getProjectIssueTypes: (projectId: string | undefined | null) => TIssueType[];
+  getWorkspaceIssueTypes: (workspaceId: string | undefined | null) => TIssueType[];
   getDefaultIssueTypeId: (projectId: string | undefined | null) => string | null;
   getIssueTypeById: (typeId: string | undefined | null) => TIssueType | undefined;
   getPropertiesForType: (typeId: string | undefined | null) => TIssueCustomProperty[];
   getPropertyById: (propertyId: string) => TIssueCustomProperty | undefined;
   getIssuePropertyValues: (issueId: string) => Record<string, TIssueCustomPropertyValue>;
+  fetchWorkspaceIssueTypes: (workspaceSlug: string) => Promise<TIssueType[]>;
+  createWorkspaceIssueType: (workspaceSlug: string, data: Partial<TIssueType>) => Promise<TIssueType>;
+  updateWorkspaceIssueType: (workspaceSlug: string, typeId: string, data: Partial<TIssueType>) => Promise<TIssueType>;
+  deleteWorkspaceIssueType: (workspaceSlug: string, typeId: string) => Promise<void>;
+  markWorkspaceIssueTypeAsDefault: (workspaceSlug: string, typeId: string) => Promise<void>;
+  fetchWorkspaceProperties: (workspaceSlug: string, typeId: string) => Promise<TIssueCustomProperty[]>;
+  createWorkspaceProperty: (
+    workspaceSlug: string,
+    typeId: string,
+    data: Partial<TIssueCustomProperty> & { options?: Partial<TIssueCustomPropertyOption>[] }
+  ) => Promise<TIssueCustomProperty>;
+  updateWorkspaceProperty: (
+    workspaceSlug: string,
+    typeId: string,
+    propertyId: string,
+    data: Partial<TIssueCustomProperty>
+  ) => Promise<TIssueCustomProperty>;
+  deleteWorkspaceProperty: (workspaceSlug: string, typeId: string, propertyId: string) => Promise<void>;
   fetchProjectIssueTypes: (workspaceSlug: string, projectId: string) => Promise<TIssueType[]>;
   createIssueType: (workspaceSlug: string, projectId: string, data: Partial<TIssueType>) => Promise<TIssueType>;
   updateIssueType: (
@@ -89,6 +108,15 @@ export class IssueTypeStore implements IIssueTypeStore {
       valueMap: observable,
       fetchedTypesMap: observable,
       fetchedPropertiesMap: observable,
+      fetchWorkspaceIssueTypes: action,
+      createWorkspaceIssueType: action,
+      updateWorkspaceIssueType: action,
+      deleteWorkspaceIssueType: action,
+      markWorkspaceIssueTypeAsDefault: action,
+      fetchWorkspaceProperties: action,
+      createWorkspaceProperty: action,
+      updateWorkspaceProperty: action,
+      deleteWorkspaceProperty: action,
       fetchProjectIssueTypes: action,
       createIssueType: action,
       updateIssueType: action,
@@ -109,6 +137,11 @@ export class IssueTypeStore implements IIssueTypeStore {
   getProjectIssueTypes = computedFn((projectId: string | undefined | null) => {
     if (!projectId) return [];
     return Object.values(this.typeMap).filter((type) => type.project_ids?.includes(projectId));
+  });
+
+  getWorkspaceIssueTypes = computedFn((workspaceId: string | undefined | null) => {
+    if (!workspaceId) return [];
+    return Object.values(this.typeMap).filter((type) => type.workspace_id === workspaceId);
   });
 
   getDefaultIssueTypeId = computedFn((projectId: string | undefined | null) => {
@@ -132,13 +165,105 @@ export class IssueTypeStore implements IIssueTypeStore {
 
   getIssuePropertyValues = computedFn((issueId: string) => this.valueMap[issueId] ?? {});
 
+  fetchWorkspaceIssueTypes = async (workspaceSlug: string) => {
+    const types = await this.service.fetchWorkspaceIssueTypes(workspaceSlug);
+    runInAction(() => {
+      types.forEach((type) => {
+        this.typeMap[type.id] = type;
+      });
+      this.fetchedTypesMap[`workspace:${workspaceSlug}`] = true;
+    });
+    return types;
+  };
+
+  createWorkspaceIssueType = async (workspaceSlug: string, data: Partial<TIssueType>) => {
+    const type = await this.service.createWorkspaceIssueType(workspaceSlug, data);
+    runInAction(() => {
+      this.typeMap[type.id] = type;
+    });
+    return type;
+  };
+
+  updateWorkspaceIssueType = async (workspaceSlug: string, typeId: string, data: Partial<TIssueType>) => {
+    const type = await this.service.updateWorkspaceIssueType(workspaceSlug, typeId, data);
+    runInAction(() => {
+      this.typeMap[type.id] = { ...this.typeMap[type.id], ...type };
+    });
+    return type;
+  };
+
+  deleteWorkspaceIssueType = async (workspaceSlug: string, typeId: string) => {
+    await this.service.deleteWorkspaceIssueType(workspaceSlug, typeId);
+    runInAction(() => {
+      delete this.typeMap[typeId];
+      Object.keys(this.propertyMap).forEach((pid) => {
+        if (this.propertyMap[pid].issue_type_id === typeId) delete this.propertyMap[pid];
+      });
+    });
+  };
+
+  markWorkspaceIssueTypeAsDefault = async (workspaceSlug: string, typeId: string) => {
+    await this.service.markWorkspaceIssueTypeAsDefault(workspaceSlug, typeId);
+    runInAction(() => {
+      Object.values(this.typeMap).forEach((type) => {
+        if (type.workspace_id === this.typeMap[typeId]?.workspace_id) {
+          this.typeMap[type.id] = { ...type, is_default: type.id === typeId };
+        }
+      });
+    });
+  };
+
+  fetchWorkspaceProperties = async (workspaceSlug: string, typeId: string) => {
+    const properties = await this.service.fetchWorkspaceProperties(workspaceSlug, typeId);
+    runInAction(() => {
+      properties.forEach((prop) => {
+        this.propertyMap[prop.id] = prop;
+      });
+      this.fetchedPropertiesMap[typeId] = true;
+    });
+    return properties;
+  };
+
+  createWorkspaceProperty = async (
+    workspaceSlug: string,
+    typeId: string,
+    data: Partial<TIssueCustomProperty> & { options?: Partial<TIssueCustomPropertyOption>[] }
+  ) => {
+    const prop = await this.service.createWorkspaceProperty(workspaceSlug, typeId, data);
+    runInAction(() => {
+      this.propertyMap[prop.id] = prop;
+    });
+    return prop;
+  };
+
+  updateWorkspaceProperty = async (
+    workspaceSlug: string,
+    typeId: string,
+    propertyId: string,
+    data: Partial<TIssueCustomProperty>
+  ) => {
+    const prop = await this.service.updateWorkspaceProperty(workspaceSlug, typeId, propertyId, data);
+    runInAction(() => {
+      this.propertyMap[prop.id] = prop;
+    });
+    return prop;
+  };
+
+  deleteWorkspaceProperty = async (workspaceSlug: string, typeId: string, propertyId: string) => {
+    await this.service.deleteWorkspaceProperty(workspaceSlug, typeId, propertyId);
+    runInAction(() => {
+      delete this.propertyMap[propertyId];
+    });
+  };
+
   fetchProjectIssueTypes = async (workspaceSlug: string, projectId: string) => {
     const types = await this.service.fetchProjectIssueTypes(workspaceSlug, projectId);
     runInAction(() => {
       types.forEach((type) => {
+        const projectIds = new Set([...(type.project_ids ?? []), projectId]);
         this.typeMap[type.id] = {
           ...type,
-          project_ids: type.project_ids?.length ? type.project_ids : [projectId],
+          project_ids: Array.from(projectIds),
         };
       });
       this.fetchedTypesMap[projectId] = true;

@@ -36,29 +36,55 @@ from plane.utils.issue_custom_property_values import (
 )
 
 
+def _project_can_access_type(slug, project_id, type_id) -> bool:
+    project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+    if not project:
+        return False
+    if project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+        return IssueType.objects.filter(workspace_id=project.workspace_id, pk=type_id).exists()
+    return ProjectIssueType.objects.filter(
+        workspace__slug=slug,
+        project_id=project_id,
+        issue_type_id=type_id,
+    ).exists()
+
+
 class IssueCustomPropertyViewSet(BaseViewSet):
     serializer_class = IssueCustomPropertySerializer
     model = IssueCustomProperty
 
     def get_queryset(self):
-        return (
-            IssueCustomProperty.objects.filter(workspace__slug=self.kwargs.get("slug"))
-            .filter(issue_type_id=self.kwargs.get("type_id"))
-            .filter(
-                issue_type__project_issue_types__project_id=self.kwargs.get("project_id"),
-                issue_type__project_issue_types__project__project_projectmember__member=self.request.user,
-                issue_type__project_issue_types__project__project_projectmember__is_active=True,
-            )
+        slug = self.kwargs.get("slug")
+        project_id = self.kwargs.get("project_id")
+        type_id = self.kwargs.get("type_id")
+        base = (
+            IssueCustomProperty.objects.filter(workspace__slug=slug)
+            .filter(issue_type_id=type_id)
             .prefetch_related("options")
-            .distinct()
         )
+        project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+        if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+            return base.filter(issue_type__workspace_id=project.workspace_id).distinct()
+        return base.filter(
+            issue_type__project_issue_types__project_id=project_id,
+            issue_type__project_issue_types__project__project_projectmember__member=self.request.user,
+            issue_type__project_issue_types__project__project_projectmember__is_active=True,
+        ).distinct()
 
     def _ensure_type_in_project(self, slug, project_id, type_id):
-        return ProjectIssueType.objects.filter(
-            workspace__slug=slug,
-            project_id=project_id,
-            issue_type_id=type_id,
-        ).exists()
+        return _project_can_access_type(slug, project_id, type_id)
+
+    def _reject_workspace_mode_mutation(self, slug, project_id):
+        project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+        if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+            return Response(
+                {
+                    "error": "This project uses the workspace work item type configuration. "
+                    "Edit properties in workspace settings, or switch the project to a custom configuration."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id, type_id):
@@ -79,6 +105,9 @@ class IssueCustomPropertyViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id, type_id):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         if not self._ensure_type_in_project(slug, project_id, type_id):
             return Response({"error": "Work item type not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -131,6 +160,9 @@ class IssueCustomPropertyViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def partial_update(self, request, slug, project_id, type_id, pk):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         prop = self.get_queryset().filter(pk=pk).first()
         if not prop:
             return Response({"error": "Property not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -157,6 +189,9 @@ class IssueCustomPropertyViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def destroy(self, request, slug, project_id, type_id, pk):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         prop = self.get_queryset().filter(pk=pk).first()
         if not prop:
             return Response({"error": "Property not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -169,28 +204,43 @@ class IssueCustomPropertyOptionViewSet(BaseViewSet):
     model = IssueCustomPropertyOption
 
     def get_queryset(self):
-        return (
-            IssueCustomPropertyOption.objects.filter(workspace__slug=self.kwargs.get("slug"))
-            .filter(property_id=self.kwargs.get("property_id"))
-            .filter(
-                property__issue_type__project_issue_types__project_id=self.kwargs.get("project_id"),
-                property__issue_type__project_issue_types__project__project_projectmember__member=self.request.user,
-                property__issue_type__project_issue_types__project__project_projectmember__is_active=True,
-            )
-            .distinct()
-        )
+        slug = self.kwargs.get("slug")
+        project_id = self.kwargs.get("project_id")
+        property_id = self.kwargs.get("property_id")
+        base = IssueCustomPropertyOption.objects.filter(workspace__slug=slug).filter(property_id=property_id)
+        project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+        if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+            return base.filter(property__issue_type__workspace_id=project.workspace_id).distinct()
+        return base.filter(
+            property__issue_type__project_issue_types__project_id=project_id,
+            property__issue_type__project_issue_types__project__project_projectmember__member=self.request.user,
+            property__issue_type__project_issue_types__project__project_projectmember__is_active=True,
+        ).distinct()
 
     def _get_property(self, slug, project_id, type_id, property_id):
+        if not _project_can_access_type(slug, project_id, type_id):
+            return None
         return (
             IssueCustomProperty.objects.filter(
                 workspace__slug=slug,
                 issue_type_id=type_id,
                 pk=property_id,
-                issue_type__project_issue_types__project_id=project_id,
             )
             .distinct()
             .first()
         )
+
+    def _reject_workspace_mode_mutation(self, slug, project_id):
+        project = Project.objects.filter(pk=project_id, workspace__slug=slug).first()
+        if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+            return Response(
+                {
+                    "error": "This project uses the workspace work item type configuration. "
+                    "Edit properties in workspace settings, or switch the project to a custom configuration."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id, type_id, property_id):
@@ -201,6 +251,9 @@ class IssueCustomPropertyOptionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id, type_id, property_id):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         prop = self._get_property(slug, project_id, type_id, property_id)
         if not prop:
             return Response({"error": "Property not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -237,6 +290,9 @@ class IssueCustomPropertyOptionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def partial_update(self, request, slug, project_id, type_id, property_id, pk):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         option = self.get_queryset().filter(pk=pk).first()
         if not option:
             return Response({"error": "Option not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -254,6 +310,9 @@ class IssueCustomPropertyOptionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def destroy(self, request, slug, project_id, type_id, property_id, pk):
+        blocked = self._reject_workspace_mode_mutation(slug, project_id)
+        if blocked:
+            return blocked
         option = self.get_queryset().filter(pk=pk).first()
         if not option:
             return Response({"error": "Option not found"}, status=status.HTTP_404_NOT_FOUND)

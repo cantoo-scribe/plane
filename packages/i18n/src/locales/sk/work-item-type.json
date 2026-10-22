@@ -4,6 +4,22 @@
     "label_lowercase": "typy pracovných položiek",
     "settings": {
       "description": "Prispôsobte a pridajte si vlastné vlastnosti, aby zodpovedali potrebám vášho tímu.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "Tento typ pracovnej položky nie je možné odstrániť, pretože je nastavený ako predvolený pre tento projekt.",
       "set_as_default": "Nastaviť ako predvolený",
       "cant_set_default_inactive_message": "Pred nastavením ako predvolený tento typ aktivujte",

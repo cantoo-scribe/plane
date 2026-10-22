@@ -9,10 +9,39 @@ from plane.app.views import (
     IssueCustomPropertyValueEndpoint,
     IssueCustomPropertyViewSet,
     IssueTypeViewSet,
+    WorkspaceIssueCustomPropertyViewSet,
+    WorkspaceIssueTypeViewSet,
 )
 
 
 urlpatterns = [
+    path(
+        "workspaces/<str:slug>/issue-types/",
+        WorkspaceIssueTypeViewSet.as_view({"get": "list", "post": "create"}),
+        name="workspace-issue-types",
+    ),
+    path(
+        "workspaces/<str:slug>/issue-types/<uuid:pk>/",
+        WorkspaceIssueTypeViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
+        name="workspace-issue-type",
+    ),
+    path(
+        "workspaces/<str:slug>/issue-types/<uuid:pk>/mark-default/",
+        WorkspaceIssueTypeViewSet.as_view({"post": "mark_as_default"}),
+        name="workspace-issue-type-mark-default",
+    ),
+    path(
+        "workspaces/<str:slug>/issue-types/<uuid:type_id>/properties/",
+        WorkspaceIssueCustomPropertyViewSet.as_view({"get": "list", "post": "create"}),
+        name="workspace-issue-type-properties",
+    ),
+    path(
+        "workspaces/<str:slug>/issue-types/<uuid:type_id>/properties/<uuid:pk>/",
+        WorkspaceIssueCustomPropertyViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="workspace-issue-type-property",
+    ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/",
         IssueTypeViewSet.as_view({"get": "list", "post": "create"}),

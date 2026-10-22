@@ -4,6 +4,22 @@
     "label_lowercase": "work item types",
     "settings": {
       "description": "Customize and add your own properties to tailor it to your team's needs.",
+      "workspace": {
+        "description": "Define work item types and custom properties shared across projects that use the workspace configuration."
+      },
+      "source": {
+        "title": "Configuration source",
+        "workspace": {
+          "label": "Use workspace configuration",
+          "description": "Inherit types and properties from workspace settings. Changes there apply to this project.",
+          "manage_hint": "Manage the shared catalog in",
+          "manage_link": "workspace settings"
+        },
+        "custom": {
+          "label": "Custom configuration for this project",
+          "description": "Create and edit work item types and properties that only apply to this project."
+        }
+      },
       "cant_delete_default_message": "This work item type cannot be deleted because it's set as the default for this project",
       "set_as_default": "Set as default",
       "cant_set_default_inactive_message": "Activate this type before setting it as default",

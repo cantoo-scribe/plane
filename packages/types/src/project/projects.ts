@@ -32,6 +32,8 @@ export interface IPartialProject {
   inbox_view: boolean;
   is_time_tracking_enabled?: boolean;
   is_issue_type_enabled?: boolean;
+  /** WORKSPACE = inherit workspace catalog; CUSTOM = project-local types */
+  issue_type_source?: "WORKSPACE" | "CUSTOM";
   is_teamspace?: boolean;
   is_okr?: boolean;
   guest_view_all_features?: boolean;

@@ -255,14 +255,19 @@ class IssueCreateSerializer(BaseSerializer):
         # Assign default work item type when the project has types enabled
         issue_type = validated_data.pop("type", None)
         if issue_type is None:
-            issue_type = (
-                IssueType.objects.filter(
+            project = Project.objects.filter(pk=project_id).first()
+            if project and project.issue_type_source == Project.ISSUE_TYPE_SOURCE_WORKSPACE:
+                issue_type = IssueType.objects.filter(
+                    workspace_id=workspace_id,
+                    is_default=True,
+                    is_active=True,
+                ).first()
+            else:
+                issue_type = IssueType.objects.filter(
                     project_issue_types__project_id=project_id,
                     project_issue_types__is_default=True,
                     is_active=True,
-                )
-                .first()
-            )
+                ).first()
         if issue_type is not None:
             validated_data["type"] = issue_type
 

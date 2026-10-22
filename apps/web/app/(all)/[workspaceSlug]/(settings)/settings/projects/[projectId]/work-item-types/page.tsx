@@ -32,6 +32,7 @@ function WorkItemTypesSettingsPage({ params }: Route.ComponentProps) {
       <PageHead title={pageTitle} />
       <div className={`w-full ${canPerformProjectAdminActions ? "" : "pointer-events-none opacity-60"}`}>
         <WorkItemTypesRoot
+          scope="project"
           workspaceSlug={workspaceSlug}
           projectId={projectId}
           isAdmin={canPerformProjectAdminActions}
